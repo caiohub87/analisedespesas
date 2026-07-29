@@ -1,0 +1,870 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dilnor · Controle de Despesas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#08080C; --bg2:#0C0B12; --surface:#151420; --surface2:#1C1A29;
+  --line:rgba(255,255,255,.07); --line2:rgba(255,255,255,.12);
+  --tx:#F3F1FA; --dim:#9B98AD; --faint:#605D73;
+  --acc:#A78BFA; --acc2:#7C5CFF; --glow:rgba(124,92,255,.35);
+  --good:#4ADE80; --goodbg:rgba(74,222,128,.12);
+  --bad:#FB7185; --badbg:rgba(251,113,133,.12);
+  --warn:#FBBF24;
+  --r:20px; --r-sm:14px;
+  --sans:'Inter',system-ui,sans-serif; --disp:'Sora',system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  background:
+    radial-gradient(900px 500px at 78% -8%, rgba(124,92,255,.16), transparent 60%),
+    radial-gradient(700px 500px at 0% 110%, rgba(167,139,250,.08), transparent 55%),
+    var(--bg);
+  color:var(--tx); font-family:var(--sans); font-size:14px; line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,.disp{font-family:var(--disp);letter-spacing:-.01em}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:#26243400;border:3px solid transparent;background-clip:padding-box;border-radius:20px}
+:hover::-webkit-scrollbar-thumb{background:#2a2838;background-clip:padding-box}
+
+/* ---------- LOGIN ---------- */
+#login{position:fixed;inset:0;z-index:50;display:grid;place-items:center;
+  background:radial-gradient(700px 500px at 50% 0%,rgba(124,92,255,.18),transparent 60%),var(--bg)}
+.login-card{width:min(92vw,380px);background:linear-gradient(180deg,var(--surface),var(--bg2));
+  border:1px solid var(--line);border-radius:24px;padding:34px 30px;
+  box-shadow:0 30px 80px -30px rgba(0,0,0,.8)}
+.brand{display:flex;align-items:center;gap:11px;margin-bottom:26px}
+.logo{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;
+  background:linear-gradient(145deg,var(--acc),var(--acc2));box-shadow:0 8px 24px -6px var(--glow);
+  font-family:var(--disp);font-weight:800;color:#fff;font-size:19px}
+.brand b{font-family:var(--disp);font-size:17px;font-weight:700}
+.brand span{display:block;font-size:11px;color:var(--dim);font-weight:500;margin-top:1px}
+label.f{display:block;font-size:12px;color:var(--dim);margin:14px 0 6px;font-weight:500}
+.inp{width:100%;background:var(--bg2);border:1px solid var(--line);border-radius:12px;
+  padding:12px 14px;color:var(--tx);font-size:14px;transition:border-color .15s,box-shadow .15s}
+.inp:focus{outline:none;border-color:var(--acc);box-shadow:0 0 0 3px rgba(124,92,255,.18)}
+.btn{width:100%;margin-top:20px;padding:12px;border-radius:12px;font-weight:600;font-size:14px;
+  background:linear-gradient(145deg,var(--acc),var(--acc2));color:#fff;
+  box-shadow:0 12px 28px -10px var(--glow);transition:transform .12s,filter .15s}
+.btn:hover{filter:brightness(1.07)} .btn:active{transform:translateY(1px)}
+.btn.ghost{background:transparent;border:1px solid var(--line2);color:var(--dim);box-shadow:none;margin-top:10px}
+.msg{margin-top:14px;font-size:12.5px;min-height:16px;color:var(--bad)}
+.msg.ok{color:var(--good)}
+
+/* ---------- SHELL ---------- */
+.app{display:none;min-height:100vh;grid-template-columns:248px 1fr}
+.app.on{display:grid}
+aside{position:sticky;top:0;height:100vh;padding:22px 16px;display:flex;flex-direction:column;gap:6px;
+  border-right:1px solid var(--line);background:linear-gradient(180deg,rgba(21,20,32,.7),rgba(8,8,12,.4))}
+aside .brand{padding:6px 8px 22px}
+.nav{display:flex;flex-direction:column;gap:3px}
+.nav a{display:flex;align-items:center;gap:12px;padding:11px 13px;border-radius:13px;color:var(--dim);
+  font-weight:500;font-size:14px;transition:background .15s,color .15s;cursor:pointer;user-select:none}
+.nav a svg{width:19px;height:19px;stroke-width:1.9;flex:none}
+.nav a:hover{color:var(--tx);background:rgba(255,255,255,.04)}
+.nav a.active{color:#fff;background:linear-gradient(145deg,rgba(167,139,250,.22),rgba(124,92,255,.14));
+  box-shadow:inset 0 0 0 1px rgba(167,139,250,.25)}
+.nav .sep{flex:1}
+.uinfo{display:flex;align-items:center;gap:10px;padding:10px;border-radius:13px;border:1px solid var(--line)}
+.uinfo .av{width:34px;height:34px;border-radius:50%;flex:none;background:linear-gradient(145deg,var(--acc),var(--acc2));
+  display:grid;place-items:center;font-family:var(--disp);font-weight:700;color:#fff;font-size:13px}
+.uinfo b{font-size:13px;display:block}.uinfo span{font-size:11px;color:var(--faint)}
+
+main{padding:26px 30px 60px;max-width:1320px;width:100%}
+.top{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:24px}
+.top h1{font-size:25px;font-weight:700}
+.top h1 span{color:var(--acc)}
+.top .sub{color:var(--dim);font-size:13.5px;margin-top:3px}
+.tools{display:flex;align-items:center;gap:10px}
+.selwrap{position:relative}
+select.msel{appearance:none;background:var(--surface);border:1px solid var(--line);border-radius:12px;
+  padding:10px 38px 10px 15px;color:var(--tx);font-size:13.5px;font-weight:600;font-family:var(--disp)}
+select.msel:focus{outline:none;border-color:var(--acc)}
+.selwrap::after{content:"";position:absolute;right:14px;top:50%;width:7px;height:7px;border-right:2px solid var(--dim);
+  border-bottom:2px solid var(--dim);transform:translateY(-65%) rotate(45deg);pointer-events:none}
+
+.badge{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;padding:5px 11px;border-radius:20px}
+.badge.g{color:var(--good);background:var(--goodbg)} .badge.b{color:var(--bad);background:var(--badbg)}
+.badge.n{color:var(--dim);background:rgba(255,255,255,.05)}
+
+/* cards / grid */
+.grid{display:grid;gap:18px}
+.g-main{grid-template-columns:1.15fr 1fr 1fr}
+.card{background:linear-gradient(180deg,var(--surface),var(--bg2));border:1px solid var(--line);
+  border-radius:var(--r);padding:22px}
+.card h3{font-size:13px;font-weight:600;color:var(--dim);letter-spacing:.01em;display:flex;
+  align-items:center;justify-content:space-between;margin-bottom:14px;font-family:var(--sans)}
+.hero{position:relative;overflow:hidden}
+.hero::before{content:"";position:absolute;right:-40px;top:-60px;width:220px;height:220px;
+  background:radial-gradient(circle,var(--glow),transparent 62%);pointer-events:none}
+.big{font-family:var(--disp);font-size:40px;font-weight:800;letter-spacing:-.02em;line-height:1.05}
+.hero .cap{color:var(--dim);font-size:12.5px;margin-top:10px}
+.kv{display:flex;justify-content:space-between;align-items:baseline;padding:9px 0;border-bottom:1px solid var(--line)}
+.kv:last-child{border-bottom:none}
+.kv .k{color:var(--dim);font-size:13px}.kv .v{font-family:var(--disp);font-weight:600;font-size:15px}
+
+/* metas / progress */
+.meta-row{padding:12px 0;border-bottom:1px solid var(--line)}.meta-row:last-child{border-bottom:none}
+.meta-row .lbl{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+.meta-row .lbl b{font-weight:600;font-size:13.5px}.meta-row .lbl .pc{font-family:var(--disp);font-weight:700;font-size:13px}
+.bar{height:8px;border-radius:20px;background:rgba(255,255,255,.06);overflow:hidden}
+.bar i{display:block;height:100%;border-radius:20px;transition:width .6s cubic-bezier(.2,.8,.2,1)}
+.meta-row .amt{font-size:11.5px;color:var(--faint);margin-top:6px}
+
+/* group list */
+.glist .gi{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}
+.glist .gi:last-child{border-bottom:none}
+.dot{width:34px;height:34px;border-radius:11px;flex:none;display:grid;place-items:center;font-size:15px;
+  background:rgba(255,255,255,.05)}
+.glist .gi .nm{flex:1;min-width:0}.glist .gi .nm b{font-size:13.5px;font-weight:600;display:block}
+.glist .gi .nm span{font-size:11.5px;color:var(--faint)}
+.glist .gi .val{text-align:right}.glist .gi .val b{font-family:var(--disp);font-size:14px;font-weight:600}
+.glist .gi .val span{display:block;font-size:11px;color:var(--dim)}
+.glist{max-height:520px;overflow:auto}
+.glist .gi{cursor:pointer}
+.glist .gi .chev{margin-left:6px;color:var(--faint);font-size:12px;transition:transform .2s;flex:none}
+.glist .gi.open .chev{transform:rotate(90deg);color:var(--acc)}
+.glist .gi.open{border-bottom-color:transparent}
+.glist .sub{padding:2px 0 10px 46px}
+.glist .sub-gi{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 11px;border-radius:9px}
+.glist .sub-gi:hover{background:rgba(255,255,255,.03)}
+.glist .sub-gi .nm{font-size:12.5px;color:var(--dim);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.glist .sub-gi .val{text-align:right;white-space:nowrap}
+.glist .sub-gi .val b{font-family:var(--disp);font-size:12.5px;color:var(--tx)}
+.glist .sub-gi .val i{font-style:normal;font-size:10.5px;color:var(--faint);margin-left:7px}
+
+/* comparativo cards */
+.g-4{grid-template-columns:repeat(4,1fr)}
+.mini{background:linear-gradient(180deg,var(--surface),var(--bg2));border:1px solid var(--line);
+  border-radius:var(--r-sm);padding:16px}
+.mini .h{display:flex;align-items:center;gap:9px;margin-bottom:12px}
+.mini .h b{font-size:12.5px;font-weight:600}
+.mini .n{font-family:var(--disp);font-size:20px;font-weight:700}
+.mini .d{font-size:11.5px;margin-top:4px}
+
+/* chart */
+.chart-card{padding:22px 22px 14px}
+.chartwrap{position:relative;width:100%;height:270px}
+.chartwrap svg{width:100%;height:100%;overflow:visible}
+.pills{display:flex;gap:6px;background:var(--bg2);border:1px solid var(--line);padding:4px;border-radius:12px}
+.pills button{padding:6px 13px;border-radius:9px;font-size:12px;font-weight:600;color:var(--dim);font-family:var(--disp)}
+.pills button.on{background:linear-gradient(145deg,var(--acc),var(--acc2));color:#fff}
+.legend{display:flex;gap:18px;margin-top:6px;padding-left:6px}
+.legend span{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--dim)}
+.legend i{width:12px;height:3px;border-radius:2px;display:inline-block}
+
+/* views */
+.view{display:none}.view.on{display:block;animation:fade .35s ease}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* upload */
+.drop{border:1.5px dashed var(--line2);border-radius:var(--r);padding:46px 24px;text-align:center;
+  transition:border-color .15s,background .15s;background:rgba(255,255,255,.015)}
+.drop.hot{border-color:var(--acc);background:rgba(124,92,255,.06)}
+.drop .ic{width:56px;height:56px;border-radius:16px;margin:0 auto 14px;display:grid;place-items:center;
+  background:rgba(124,92,255,.12);color:var(--acc)}
+.drop b{font-size:15px;font-family:var(--disp)}.drop p{color:var(--dim);font-size:13px;margin-top:5px}
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{text-align:left;color:var(--dim);font-weight:600;font-size:11.5px;text-transform:uppercase;
+  letter-spacing:.03em;padding:10px 12px;border-bottom:1px solid var(--line)}
+.tbl td{padding:9px 12px;border-bottom:1px solid var(--line)}
+.tbl td.r,.tbl th.r{text-align:right;font-variant-numeric:tabular-nums}
+.tbl tr:hover td{background:rgba(255,255,255,.02)}
+
+/* metas editor */
+.mform{display:grid;gap:14px;max-width:560px}
+.mline{display:grid;grid-template-columns:1fr 180px;gap:14px;align-items:center}
+.mline .info b{font-size:14px;font-weight:600}.mline .info span{font-size:12px;color:var(--faint);display:block}
+.mline .ref{font-size:11.5px;color:var(--dim);margin-top:2px}
+
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);opacity:0;
+  background:var(--surface2);border:1px solid var(--line2);border-radius:14px;padding:13px 20px;font-size:13.5px;
+  box-shadow:0 20px 50px -20px #000;transition:.3s;z-index:60;pointer-events:none}
+.toast.on{opacity:1;transform:translateX(-50%)}
+.toast.ok{border-color:rgba(74,222,128,.4)} .toast.err{border-color:rgba(251,113,133,.4)}
+
+.demo-flag{position:fixed;top:12px;right:14px;z-index:40;font-size:11px;color:var(--warn);
+  background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.3);padding:5px 11px;border-radius:20px;font-weight:600}
+
+@media(max-width:900px){
+  .app.on{grid-template-columns:1fr} aside{display:none}
+  .g-main,.g-4{grid-template-columns:1fr} main{padding:20px 16px 50px}
+}
+</style>
+</head>
+<body>
+
+<!-- ============ LOGIN ============ -->
+<div id="login">
+  <div class="login-card">
+    <div class="brand">
+      <div class="logo">D</div>
+      <div><b>Dilnor Despesas</b><span>Controle de despesas × faturamento</span></div>
+    </div>
+    <label class="f" for="em">E-mail</label>
+    <input id="em" class="inp" type="email" placeholder="dilnor.gerente@gestao.app" autocomplete="username">
+    <label class="f" for="pw">Senha</label>
+    <input id="pw" class="inp" type="password" placeholder="••••••••" autocomplete="current-password">
+    <button class="btn" id="btnLogin">Entrar</button>
+    <button class="btn ghost" id="btnDemo">Ver demonstração</button>
+    <div class="msg" id="loginMsg"></div>
+  </div>
+</div>
+
+<!-- ============ APP ============ -->
+<div class="app" id="app">
+  <aside>
+    <div class="brand">
+      <div class="logo">D</div>
+      <div><b>Dilnor</b><span>Despesas</span></div>
+    </div>
+    <nav class="nav" id="nav">
+      <a data-view="painel" class="active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
+        Painel
+      </a>
+      <a data-view="upload">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 16V4m0 0L7 9m5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+        Enviar relatório
+      </a>
+      <a data-view="metas">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/></svg>
+        Metas
+      </a>
+      <a data-view="analise">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 19V5"/><path d="M4 19h16"/><path d="M8 16l3.5-4 3 2.5L20 8"/></svg>
+        Análise
+      </a>
+      <div class="sep"></div>
+      <a id="logout">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/><path d="M9 21H6a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3h3"/></svg>
+        Sair
+      </a>
+    </nav>
+    <div class="uinfo">
+      <div class="av" id="uav">G</div>
+      <div><b id="uname">Gerente</b><span id="umail">demonstração</span></div>
+    </div>
+  </aside>
+
+  <main>
+    <!-- ===== PAINEL ===== -->
+    <section class="view on" id="v-painel">
+      <div class="top">
+        <div>
+          <h1>Olá, <span id="hiName">Gerente</span></h1>
+          <div class="sub" id="hiSub">Resumo das despesas da Dilnor</div>
+        </div>
+        <div class="tools">
+          <div class="selwrap"><select class="msel" id="monthSel"></select></div>
+        </div>
+      </div>
+
+      <div class="grid g-main">
+        <div class="card hero">
+          <h3>Despesa total do mês <span class="badge n" id="periodTag">—</span></h3>
+          <div class="big tnum" id="kTotal">R$ 0</div>
+          <div class="cap" id="kTotalCap">— do faturamento</div>
+          <div style="margin-top:18px" class="badge" id="kTotalBadge">—</div>
+        </div>
+
+        <div class="card">
+          <h3>Faturamento</h3>
+          <div class="kv"><span class="k">Bruto</span><span class="v tnum" id="fBruto">—</span></div>
+          <div class="kv"><span class="k">Líquido</span><span class="v tnum" id="fLiquido">—</span></div>
+          <div class="kv"><span class="k">Saldo bruto</span><span class="v tnum" id="fSaldo">—</span></div>
+        </div>
+
+        <div class="card">
+          <h3>Meta do mês <span class="badge n" id="metaState">—</span></h3>
+          <div id="metaMini"></div>
+        </div>
+      </div>
+
+      <div class="grid g-4" style="margin-top:18px" id="cmpCards"></div>
+
+      <div class="grid" style="grid-template-columns:1.7fr 1fr;margin-top:18px">
+        <div class="card chart-card">
+          <h3 style="margin-bottom:16px">
+            <span id="chartTitle">Evolução mensal</span>
+            <div class="pills" id="rangePills">
+              <button data-mode="mensal" data-r="12" class="on">1A</button>
+              <button data-mode="mensal" data-r="24">2A</button>
+              <button data-mode="mensal" data-r="0">Tudo</button>
+              <button data-mode="anual">Por ano</button>
+            </div>
+          </h3>
+          <div class="chartwrap" id="chart"></div>
+          <div class="legend" id="chartLegend"></div>
+        </div>
+        <div class="card">
+          <h3>Grupos de despesa <span class="badge n">clique p/ ver contas</span></h3>
+          <div class="glist" id="groupList"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== UPLOAD ===== -->
+    <section class="view" id="v-upload">
+      <div class="top"><div><h1>Enviar <span>relatório</span></h1>
+        <div class="sub">Suba o PDF do balancete (124 - Por Conta). O sistema lê e grava sem duplicar.</div></div></div>
+
+      <div class="card">
+        <input type="file" id="pdfInput" accept="application/pdf" hidden>
+        <div class="drop" id="drop">
+          <div class="ic"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 16V4m0 0L7 9m5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg></div>
+          <b>Arraste o PDF aqui ou clique para escolher</b>
+          <p id="dropHint">Balancete do ERP · formato "124 - Por Conta"</p>
+        </div>
+      </div>
+
+      <div id="previewBox" style="display:none;margin-top:18px">
+        <div class="grid g-main">
+          <div class="card">
+            <h3>Período lido</h3>
+            <div class="big tnum" style="font-size:22px" id="pvPeriodo">—</div>
+            <label class="f" style="margin-top:16px">Competência (mês/ano) para gravar</label>
+            <div style="display:flex;gap:10px">
+              <div class="selwrap" style="flex:1"><select class="msel" id="pvMes" style="width:100%"></select></div>
+              <div class="selwrap" style="flex:1"><select class="msel" id="pvAno" style="width:100%"></select></div>
+            </div>
+          </div>
+          <div class="card">
+            <h3>Faturamento lido</h3>
+            <div class="kv"><span class="k">Bruto</span><span class="v tnum" id="pvBruto">—</span></div>
+            <div class="kv"><span class="k">Líquido</span><span class="v tnum" id="pvLiquido">—</span></div>
+            <div class="kv"><span class="k">Saldo bruto</span><span class="v tnum" id="pvSaldo">—</span></div>
+          </div>
+          <div class="card">
+            <h3>Conferência</h3>
+            <div class="kv"><span class="k">Linhas lidas</span><span class="v tnum" id="pvLinhas">0</span></div>
+            <div class="kv"><span class="k">Soma das linhas</span><span class="v tnum" id="pvSoma">—</span></div>
+            <div class="kv"><span class="k">Total do PDF</span><span class="v tnum" id="pvTotalPdf">—</span></div>
+            <div style="margin-top:14px" class="badge" id="pvConf">—</div>
+          </div>
+        </div>
+        <div class="card" style="margin-top:18px">
+          <h3>Prévia das despesas <span class="badge n" id="pvGrupos">—</span></h3>
+          <div style="max-height:340px;overflow:auto">
+            <table class="tbl"><thead><tr><th>Grupo</th><th>Cód.</th><th>Conta</th><th class="r">Valor</th></tr></thead>
+            <tbody id="pvBody"></tbody></table>
+          </div>
+          <div id="pvOverlap" style="display:none;margin-top:16px;padding:13px 15px;border-radius:12px;
+            background:var(--badbg);border:1px solid rgba(251,113,133,.35);color:var(--bad);font-size:13px"></div>
+          <div style="display:flex;gap:12px;margin-top:18px">
+            <button class="btn" style="max-width:220px" id="btnSalvar">Gravar no sistema</button>
+            <button class="btn ghost" style="max-width:140px;margin-top:0" id="btnCancelar">Cancelar</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== METAS ===== -->
+    <section class="view" id="v-metas">
+      <div class="top"><div><h1>Metas <span>do mês</span></h1>
+        <div class="sub">Defina o orçamento. O realizado (dos relatórios) é comparado automaticamente.</div></div>
+        <div class="tools"><div class="selwrap"><select class="msel" id="metaMonthSel"></select></div></div>
+      </div>
+      <div class="card">
+        <div class="mform" id="metaForm"></div>
+        <button class="btn" style="max-width:200px;margin-top:22px" id="btnSalvarMetas">Salvar metas</button>
+      </div>
+    </section>
+
+    <!-- ===== ANALISE ===== -->
+    <section class="view" id="v-analise">
+      <div class="top"><div><h1>Análise <span>comparativa</span></h1>
+        <div class="sub">Comparativo entre anos e grupos.</div></div></div>
+      <div class="card"><p style="color:var(--dim)">Em breve — comparativos ano a ano, por grupo e por conta.</p></div>
+    </section>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+/* ============================================================
+   >>> COLE SUAS CHAVES DO SUPABASE AQUI (só estas 2 linhas) <<<
+   Onde achar: Supabase → seu projeto de despesas → Settings → API
+   A chave "anon public" é pública e pode ficar no arquivo (as policies protegem o banco).
+   ============================================================ */
+const SUPA_URL = 'https://arfmllbnaomhhkepzcjk.supabase.co';   // só a Project URL (SEM /rest/v1)
+const SUPA_KEY = 'sb_publishable_L9vrWcx8fgQJ4j2y1syQ2A_CNzxSbde';   // ex: 'eyJhbGciOiJIUzI1Ni...'  (anon public)
+const UNIDADE  = 'dilnor';
+
+/* grupos principais em destaque */
+const GRUPOS_PRINC = {'351':'Geral','352':'Predial','365':'Depósito','366':'Logística'};
+const GRUPO_NOMES = {'351':'Geral','352':'Manutenção Predial','353':'Terceiros','354':'Informática','355':'Sócios','356':'Vendedores','357':'Gerência','358':'Supervisão','360':'Promotores','361':'Administrativo','362':'Bancárias','363':'Tributárias','365':'Depósito','366':'Logística','600':'Desp. Bancárias'};
+const GRUPO_ICON = {'351':'🏢','352':'🔧','353':'🤝','354':'💻','355':'👔','356':'🛒','357':'📋','358':'🧭','360':'📣','361':'🗂️','362':'🏦','363':'⚖️','365':'📦','366':'🚚','600':'💳','TOTAL':'💰'};
+const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const MESES_ABR = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+
+let sb=null, DEMO=false, DATA={desp:[],fat:[],metas:[]};
+if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+const brl = v => (v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0});
+const brl2= v => (v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL',minimumFractionDigits:2});
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const toast=(m,t='')=>{const e=$('#toast');e.textContent=m;e.className='toast on '+t;setTimeout(()=>e.className='toast '+t,2600);};
+
+/* =================== AUTH =================== */
+function supaReady(){ if(!SUPA_URL||!SUPA_KEY) return false; if(!sb) sb=window.supabase.createClient(SUPA_URL,SUPA_KEY); return true; }
+
+$('#btnLogin').onclick=async()=>{
+  const email=$('#em').value.trim(), pass=$('#pw').value, msg=$('#loginMsg');
+  msg.className='msg'; msg.textContent='';
+  if(!supaReady()){ msg.textContent='Configure o Supabase (SUPA_URL/SUPA_KEY) no arquivo, ou use a demonstração.'; return; }
+  msg.textContent='Entrando…';
+  const {data,error}=await sb.auth.signInWithPassword({email,password:pass});
+  if(error){ msg.textContent='❌ '+error.message; return; }
+  startApp(data.user.email);
+};
+$('#btnDemo').onclick=()=>{ DEMO=true; buildDemo(); startApp('demonstração'); };
+$('#logout').onclick=async()=>{ if(sb) await sb.auth.signOut(); location.reload(); };
+
+async function startApp(email){
+  $('#login').style.display='none'; $('#app').classList.add('on');
+  const nm = email.split('@')[0].split('.').slice(-1)[0];
+  const disp = nm.charAt(0).toUpperCase()+nm.slice(1);
+  $('#uname').textContent=disp; $('#hiName').textContent=disp; $('#uav').textContent=disp[0];
+  $('#umail').textContent=email;
+  if(DEMO){ const f=document.createElement('div');f.className='demo-flag';f.textContent='modo demonstração — dados de exemplo';document.body.appendChild(f); }
+  else await loadAll();
+  initMonths(); renderAll();
+}
+
+/* =================== DATA =================== */
+/* o Supabase devolve no máximo 1000 linhas por consulta — busca em páginas até vir tudo */
+async function fetchAll(tabela,cols){
+  const PAGE=1000; let out=[],from=0;
+  for(;;){
+    const {data,error}=await sb.from(tabela).select(cols).eq('unidade',UNIDADE).range(from,from+PAGE-1);
+    if(error){console.error(tabela,error.message);break;}
+    out=out.concat(data||[]);
+    if(!data||data.length<PAGE)break;
+    from+=PAGE;
+  }
+  return out;
+}
+async function loadAll(){
+  const [d,f,m]=await Promise.all([
+    fetchAll('despesas','ano,mes,grupo,grupo_nome,codigo,conta,valor'),
+    fetchAll('despesas_faturamento','*'),
+    fetchAll('metas','*')
+  ]);
+  DATA.desp=d; DATA.fat=f; DATA.metas=m;
+}
+
+/* chave mês */
+const ym = (a,m)=>a*100+m;
+function monthsAvailable(){
+  const s=new Set(DATA.desp.map(r=>ym(r.ano,r.mes)));
+  return [...s].sort((a,b)=>b-a);
+}
+let CUR=null;
+
+function totalMes(a,m){ return DATA.desp.filter(r=>r.ano===a&&r.mes===m).reduce((s,r)=>s+(+r.valor||0),0); }
+function grupoMes(a,m,g){ return DATA.desp.filter(r=>r.ano===a&&r.mes===m&&r.grupo===g).reduce((s,r)=>s+(+r.valor||0),0); }
+function fatMes(a,m){ return DATA.fat.find(r=>r.ano===a&&r.mes===m)||null; }
+function metaMes(a,m,alvo){ const r=DATA.metas.find(x=>x.ano===a&&x.mes===m&&x.alvo===alvo); return r?+r.valor_meta:null; }
+
+/* =================== RENDER =================== */
+function initMonths(){
+  const av=monthsAvailable(); if(!av.length){av.push(ym(2026,6));}
+  CUR=av[0];
+  const opts=av.map(v=>{const a=Math.floor(v/100),m=v%100;return `<option value="${v}">${MESES[m-1]} ${a}</option>`}).join('');
+  $('#monthSel').innerHTML=opts; $('#monthSel').value=CUR;
+  $('#metaMonthSel').innerHTML=opts; $('#metaMonthSel').value=CUR;
+  $('#monthSel').onchange=e=>{CUR=+e.target.value;renderAll();};
+  $('#metaMonthSel').onchange=()=>renderMetaForm();
+  // preview month/year selects
+  $('#pvMes').innerHTML=MESES.map((m,i)=>`<option value="${i+1}">${m}</option>`).join('');
+  const yrs=[]; for(let y=2022;y<=2027;y++)yrs.push(y);
+  $('#pvAno').innerHTML=yrs.map(y=>`<option value="${y}">${y}</option>`).join('');
+}
+
+function renderAll(){ renderPainel(); renderMetaForm(); }
+
+function renderPainel(){
+  const a=Math.floor(CUR/100), m=CUR%100;
+  const tot=totalMes(a,m), f=fatMes(a,m), fl=f?+f.fat_liquido:0;
+  $('#periodTag').textContent=`${MESES_ABR[m-1]} ${a}`;
+  $('#kTotal').textContent=brl(tot);
+  const pc = fl? (tot/fl*100):0;
+  $('#kTotalCap').textContent = fl? `${pc.toFixed(1)}% do faturamento líquido` : 'sem faturamento no mês';
+  // meta total
+  const mt=metaMes(a,m,'TOTAL');
+  const bd=$('#kTotalBadge');
+  if(mt){ const d=tot-mt; const over=d>0;
+    bd.className='badge '+(over?'b':'g');
+    bd.textContent=(over?'▲ ':'▼ ')+brl(Math.abs(d))+(over?' acima da meta':' abaixo da meta'); }
+  else { bd.className='badge n'; bd.textContent='sem meta definida'; }
+
+  if(f){ $('#fBruto').textContent=brl(+f.fat_bruto); $('#fLiquido').textContent=brl(+f.fat_liquido);
+    $('#fSaldo').textContent=brl(+f.saldo_bruto); }
+  else { $('#fBruto').textContent=$('#fLiquido').textContent=$('#fSaldo').textContent='—'; }
+
+  // meta mini (total + 4)
+  renderMetaMini(a,m);
+  // comparativo cards (4 grupos)
+  renderCmp(a,m);
+  // grupos list
+  renderGroups(a,m);
+  // chart
+  drawChart();
+}
+
+function renderMetaMini(a,m){
+  const box=$('#metaMini'); box.innerHTML='';
+  const alvos=['TOTAL','351','352','365','366'];
+  let anySet=false;
+  alvos.forEach(al=>{
+    const meta=metaMes(a,m,al); if(meta==null) return; anySet=true;
+    const real = al==='TOTAL'?totalMes(a,m):grupoMes(a,m,al);
+    const pc=meta? Math.min(real/meta*100,140):0; const over=real>meta;
+    const nome = al==='TOTAL'?'Total':GRUPOS_PRINC[al];
+    box.insertAdjacentHTML('beforeend',`
+      <div class="meta-row">
+        <div class="lbl"><b>${nome}</b><span class="pc" style="color:${over?'var(--bad)':'var(--good)'}">${(real/meta*100||0).toFixed(0)}%</span></div>
+        <div class="bar"><i style="width:${pc}%;background:${over?'linear-gradient(90deg,#f43f5e,#fb7185)':'linear-gradient(90deg,var(--acc2),var(--acc))'}"></i></div>
+        <div class="amt">${brl(real)} de ${brl(meta)}</div>
+      </div>`);
+  });
+  $('#metaState').textContent = anySet?'definida':'sem meta';
+  $('#metaState').className='badge '+(anySet?'g':'n');
+  if(!anySet) box.innerHTML='<p style="color:var(--faint);font-size:13px">Nenhuma meta definida para este mês. Defina em "Metas".</p>';
+}
+
+function renderCmp(a,m){
+  const box=$('#cmpCards'); box.innerHTML='';
+  // mês anterior p/ variação
+  const pa = m===1?a-1:a, pm = m===1?12:m-1;
+  Object.entries(GRUPOS_PRINC).forEach(([g,nm])=>{
+    const cur=grupoMes(a,m,g), prev=grupoMes(pa,pm,g);
+    const dv = prev? ((cur-prev)/prev*100):0; const up=cur>prev;
+    box.insertAdjacentHTML('beforeend',`
+      <div class="mini">
+        <div class="h"><div class="dot">${GRUPO_ICON[g]}</div><b>${nm}</b></div>
+        <div class="n tnum">${brl(cur)}</div>
+        <div class="d" style="color:${up?'var(--bad)':'var(--good)'}">${up?'▲':'▼'} ${Math.abs(dv).toFixed(1)}% vs mês anterior</div>
+      </div>`);
+  });
+}
+
+// grupos presentes no mês (todos), somados
+function gruposMes(a,m){
+  const map={};
+  DATA.desp.filter(r=>r.ano===a&&r.mes===m).forEach(r=>{
+    if(!map[r.grupo]) map[r.grupo]={g:r.grupo,nm:GRUPO_NOMES[r.grupo]||r.grupo_nome||('Grupo '+r.grupo),v:0,n:0};
+    map[r.grupo].v+=(+r.valor||0); map[r.grupo].n++;
+  });
+  return Object.values(map).sort((x,y)=>y.v-x.v);
+}
+// contas (subgrupos) de um grupo no mês
+function contasGrupo(a,m,g){
+  return DATA.desp.filter(r=>r.ano===a&&r.mes===m&&r.grupo===g)
+    .map(r=>({conta:r.conta,codigo:r.codigo,valor:+r.valor||0}))
+    .sort((x,y)=>y.valor-x.valor);
+}
+function renderGroups(a,m){
+  const box=$('#groupList'); box.innerHTML='';
+  const tot=totalMes(a,m)||1;
+  gruposMes(a,m).forEach(r=>{
+    const icon=GRUPO_ICON[r.g]||'📄', gtot=r.v||1;
+    const contas=contasGrupo(a,m,r.g);
+    const sub=contas.length? contas.map(c=>`
+        <div class="sub-gi">
+          <span class="nm">${c.conta}</span>
+          <span class="val"><b class="tnum">${brl(c.valor)}</b><i>${(c.valor/gtot*100).toFixed(1)}%</i></span>
+        </div>`).join('') : '<div class="sub-gi" style="color:var(--faint)">sem lançamentos neste mês</div>';
+    box.insertAdjacentHTML('beforeend',`
+      <div class="gi" data-g="${r.g}">
+        <div class="dot">${icon}</div>
+        <div class="nm"><b>${r.nm}</b><span>código ${r.g} · ${r.n} contas</span></div>
+        <div class="val"><b class="tnum">${brl(r.v)}</b><span>${(r.v/tot*100).toFixed(1)}%</span></div>
+        <div class="chev">▸</div>
+      </div>
+      <div class="sub" data-sub="${r.g}" hidden>${sub}</div>`);
+  });
+}
+// abre/fecha o detalhamento por conta (subgrupos)
+$('#groupList').addEventListener('click',e=>{const gi=e.target.closest('.gi');if(!gi)return;
+  const g=gi.dataset.g, sub=$(`#groupList .sub[data-sub="${g}"]`);
+  const open=sub.hasAttribute('hidden'); if(open){sub.removeAttribute('hidden');gi.classList.add('open');}
+  else{sub.setAttribute('hidden','');gi.classList.remove('open');}});
+
+/* line chart (SVG) — dois modos: mensal (linha do tempo, anos marcados) e anual (uma linha por ano) */
+let RANGE=12, CHARTMODE='mensal';
+const YEARCLR=['#38BDF8','#4ADE80','#FBBF24','#FB7185','#A78BFA','#7C5CFF'];
+const CW=680,CH=250,CPL=10,CPR=10,CPT=14,CPB=28;
+
+function drawChart(){ CHARTMODE==='anual'?drawChartAnual():drawChartMensal(); }
+
+function drawChartMensal(){
+  $('#chartTitle').textContent='Evolução mensal';
+  const av=monthsAvailable().slice().reverse(); // asc
+  let series=av; if(RANGE>0) series=av.slice(-RANGE);
+  const desp=series.map(v=>totalMes(Math.floor(v/100),v%100));
+  const fat =series.map(v=>{const f=fatMes(Math.floor(v/100),v%100);return f?(+f.fat_liquido/10):0;});
+  const all=[...desp,...fat].filter(x=>x>0); const max=Math.max(...all,1)*1.12, min=0;
+  const n=series.length;
+  const x=i=> CPL+(CW-CPL-CPR)*(n<=1?0.5:i/(n-1));
+  const y=v=> CPT+(CH-CPT-CPB)*(1-(v-min)/(max-min));
+  const path=arr=>arr.map((v,i)=>`${i?'L':'M'}${x(i).toFixed(1)} ${y(v).toFixed(1)}`).join(' ');
+  const area=arr=>path(arr)+` L${x(n-1)} ${CH-CPB} L${x(0)} ${CH-CPB} Z`;
+  const many=n>15;
+  let dividers='', xl='';
+  series.forEach((v,i)=>{
+    const mo=v%100, yr=Math.floor(v/100);
+    if(mo===1 || i===0){
+      if(mo===1 && i>0) dividers+=`<line x1="${x(i).toFixed(1)}" y1="${CPT}" x2="${x(i).toFixed(1)}" y2="${CH-CPB}" stroke="rgba(255,255,255,.07)"/>`;
+      xl+=`<text x="${x(i).toFixed(1)}" y="${CH-8}" fill="var(--dim)" font-size="11" font-weight="700" text-anchor="${i===0?'start':'middle'}">${yr}</text>`;
+    } else if(!many){
+      xl+=`<text x="${x(i).toFixed(1)}" y="${CH-8}" fill="var(--faint)" font-size="10" text-anchor="middle">${MESES_ABR[mo-1]}</text>`;
+    }
+  });
+  const dots = many?'':desp.map((v,i)=>`<circle cx="${x(i).toFixed(1)}" cy="${y(v).toFixed(1)}" r="3.5" fill="#0C0B12" stroke="var(--acc)" stroke-width="2"/>`).join('');
+  $('#chart').innerHTML=`<svg viewBox="0 0 ${CW} ${CH}" preserveAspectRatio="none">
+    <defs><linearGradient id="fill" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="var(--acc2)" stop-opacity=".28"/><stop offset="1" stop-color="var(--acc2)" stop-opacity="0"/>
+    </linearGradient></defs>
+    ${dividers}
+    <path d="${area(desp)}" fill="url(#fill)"/>
+    <path d="${path(fat)}" fill="none" stroke="#3a3852" stroke-width="2" stroke-dasharray="5 5"/>
+    <path d="${path(desp)}" fill="none" stroke="var(--acc)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+    ${dots}${xl}
+  </svg>`;
+  $('#chartLegend').innerHTML=`<span><i style="background:var(--acc)"></i>Despesa total</span><span><i style="background:#3a3852"></i>Faturamento (÷10)</span>`;
+}
+
+function drawChartAnual(){
+  $('#chartTitle').textContent='Comparativo por ano';
+  const years=[...new Set(monthsAvailable().map(v=>Math.floor(v/100)))].sort();
+  const byYear=years.map(yr=>({yr,vals:Array.from({length:12},(_,mi)=>{const t=totalMes(yr,mi+1);return t>0?t:null;})}));
+  const allv=byYear.flatMap(d=>d.vals).filter(v=>v!=null);
+  const max=Math.max(...allv,1)*1.12, min=0;
+  const x=i=> CPL+(CW-CPL-CPR)*(i/11);
+  const y=v=> CPT+(CH-CPT-CPB)*(1-(v-min)/(max-min));
+  let body='';
+  byYear.forEach((d,idx)=>{
+    const clr=YEARCLR[idx%YEARCLR.length], last=idx===byYear.length-1;
+    let dstr='',started=false;
+    d.vals.forEach((v,i)=>{if(v==null)return;dstr+=`${started?'L':'M'}${x(i).toFixed(1)} ${y(v).toFixed(1)} `;started=true;});
+    body+=`<path d="${dstr}" fill="none" stroke="${clr}" stroke-width="${last?2.8:2}" stroke-linecap="round" stroke-linejoin="round" opacity="${last?1:.8}"/>`;
+    d.vals.forEach((v,i)=>{if(v==null)return;body+=`<circle cx="${x(i).toFixed(1)}" cy="${y(v).toFixed(1)}" r="${last?3.2:2.4}" fill="#0C0B12" stroke="${clr}" stroke-width="2"/>`;});
+  });
+  const xl=MESES_ABR.map((m,i)=>`<text x="${x(i).toFixed(1)}" y="${CH-8}" fill="var(--faint)" font-size="10" text-anchor="middle">${m}</text>`).join('');
+  $('#chart').innerHTML=`<svg viewBox="0 0 ${CW} ${CH}" preserveAspectRatio="none">${body}${xl}</svg>`;
+  $('#chartLegend').innerHTML=byYear.map((d,idx)=>`<span><i style="background:${YEARCLR[idx%YEARCLR.length]}"></i>${d.yr}</span>`).join('');
+}
+$('#rangePills').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+  $$('#rangePills button').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+  CHARTMODE=b.dataset.mode; if(b.dataset.r!==undefined)RANGE=+b.dataset.r; drawChart();});
+
+/* =================== METAS FORM =================== */
+function renderMetaForm(){
+  const v=+$('#metaMonthSel').value; const a=Math.floor(v/100),m=v%100;
+  const box=$('#metaForm'); box.innerHTML='';
+  const pa=m===1?a-1:a, pm=m===1?12:m-1;
+  const alvos=[['TOTAL','Despesa total'],['351','Geral'],['352','Predial'],['365','Depósito'],['366','Logística']];
+  alvos.forEach(([al,nm])=>{
+    const real=al==='TOTAL'?totalMes(a,m):grupoMes(a,m,al);
+    const ref =al==='TOTAL'?totalMes(pa,pm):grupoMes(pa,pm,al);
+    const cur=metaMes(a,m,al);
+    box.insertAdjacentHTML('beforeend',`
+      <div class="mline">
+        <div class="info"><b>${nm}</b><span>${al==='TOTAL'?'todos os grupos':'código '+al}</span>
+          <div class="ref">Mês anterior: ${brl(ref)} · Realizado atual: ${brl(real)}</div></div>
+        <input class="inp mmeta" data-alvo="${al}" type="number" step="0.01" placeholder="R$ meta" value="${cur??''}">
+      </div>`);
+  });
+}
+$('#btnSalvarMetas').onclick=async()=>{
+  const v=+$('#metaMonthSel').value; const a=Math.floor(v/100),m=v%100;
+  const rows=$$('.mmeta').filter(i=>i.value!=='').map(i=>({unidade:UNIDADE,ano:a,mes:m,alvo:i.dataset.alvo,valor_meta:+i.value}));
+  if(!rows.length){toast('Preencha ao menos uma meta','err');return;}
+  if(DEMO){ rows.forEach(r=>{const ex=DATA.metas.find(x=>x.ano===a&&x.mes===m&&x.alvo===r.alvo);
+    if(ex)ex.valor_meta=r.valor_meta;else DATA.metas.push(r);}); toast('Metas salvas (demo)','ok'); renderAll(); return; }
+  const {error}=await sb.from('metas').upsert(rows,{onConflict:'unidade,ano,mes,alvo'});
+  if(error){toast('❌ '+error.message,'err');return;}
+  await loadAll(); toast('Metas salvas','ok'); renderAll();
+};
+
+/* =================== NAV =================== */
+$('#nav').addEventListener('click',e=>{const a=e.target.closest('a[data-view]');if(!a)return;
+  $$('#nav a').forEach(x=>x.classList.remove('active'));a.classList.add('active');
+  $$('.view').forEach(v=>v.classList.remove('on'));$('#v-'+a.dataset.view).classList.add('on');});
+
+/* =================== UPLOAD / PDF =================== */
+const drop=$('#drop'), pdfInput=$('#pdfInput');
+drop.onclick=()=>pdfInput.click();
+['dragover','dragenter'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('hot');}));
+['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('hot');}));
+drop.addEventListener('drop',e=>{if(e.dataTransfer.files[0])handlePdf(e.dataTransfer.files[0]);});
+pdfInput.onchange=e=>{if(e.target.files[0])handlePdf(e.target.files[0]);};
+
+let PARSED=null;
+async function handlePdf(file){
+  if(file.type!=='application/pdf'){toast('Envie um arquivo PDF','err');return;}
+  $('#dropHint').textContent='Lendo '+file.name+'…';
+  try{
+    const buf=await file.arrayBuffer();
+    const pdf=await pdfjsLib.getDocument({data:buf}).promise;
+    const NUM=/^-?[\d.]+,\d{2}$/;
+    let rows=[], boundary=null;
+    for(let p=1;p<=pdf.numPages;p++){
+      const page=await pdf.getPage(p); const tc=await page.getTextContent();
+      const byY={};
+      tc.items.forEach(it=>{const y=Math.round(it.transform[5]);(byY[y]=byY[y]||[]).push(it);});
+      Object.keys(byY).sort((a,b)=>b-a).forEach(y=>{
+        const its=byY[y].sort((a,b)=>a.transform[4]-b.transform[4]);
+        const text=its.map(i=>i.str).join(' ').replace(/\s+/g,' ').trim();
+        if(!text)return;
+        // borda direita da coluna "Vl. Realizado": pega o x do rótulo "Vl. Previsto" (a 1ª coluna de valor termina antes dele)
+        if(boundary==null){ const pv=its.find(i=>/^Vl\.\s*Previsto$/i.test(i.str.trim())); if(pv) boundary=pv.transform[4]; }
+        const nums=its.filter(i=>NUM.test(i.str.trim())).map(i=>({val:num(i.str), xR:i.transform[4]+(i.width||0)}));
+        rows.push({text,nums});
+      });
+    }
+    PARSED=parseBalancete(rows, boundary||365);
+    showPreview(PARSED);
+  }catch(err){ toast('Erro ao ler PDF: '+err.message,'err'); $('#dropHint').textContent='Balancete do ERP · formato "124 - Por Conta"'; }
+}
+
+function num(s){ if(s==null)return 0; s=(''+s).replace(/\./g,'').replace(',','.').replace(/[^\d.-]/g,''); const n=parseFloat(s); return isNaN(n)?0:n; }
+
+function parseBalancete(rows, boundary){
+  const res={periodo:'',pini:null,pfim:null,fat:{},linhas:[],totalPdf:null,grupos:new Set()};
+  let grupo=null,gnome=null;
+  const GNOME={'351':'DESPESA GERAL','352':'MANUTENÇÃO PREDIAL','353':'TERCEIROS','354':'INFORMATICA','355':'SOCIOS','356':'VENDEDORES','357':'GERENCIA','358':'SUPERVISAO','360':'PROMOTORES','361':'ADMINISTRATIVO','362':'BANCARIAS','363':'TRIBUTARIAS','365':'DEPOSITO','366':'LOGISTICA','600':'DESPESAS BANCARIAS'};
+  const firstNum=s=>{const m=(s||'').match(/(-?[\d.]+,\d{2})/);return m?num(m[1]):null;};
+  for(let i=0;i<rows.length;i++){
+    const l=rows[i].text, prev=(rows[i-1]||{}).text||'';
+    let mp=l.match(/Per[ií]odo:?\s*(\d{2}\/\d{2}\/\d{4})\s*a\s*(\d{2}\/\d{2}\/\d{4})/i);
+    if(mp){res.periodo=mp[1]+' a '+mp[2];const p=s=>{const[d,mo,y]=s.split('/');return y+'-'+mo+'-'+d;};res.pini=p(mp[1]);res.pfim=p(mp[2]);}
+    let mg=l.match(/Grupo:?\s*(\d{3})\s*[-–]\s*(.+)/i);
+    if(mg){grupo=mg[1];gnome=(mg[2]||GNOME[grupo]||'').trim().replace(/\s+/g,' ');res.grupos.add(grupo);}
+    // faturamento: o valor pode estar na própria linha OU na linha anterior (layout em 2 colunas)
+    if(/Faturamento\s+Bruto/i.test(l)){const v=firstNum(l);res.fat.bruto=(v!=null?v:firstNum(prev));}
+    if(/Faturamento\s+L[ií]quido/i.test(l)){const v=firstNum(l);res.fat.liquido=(v!=null?v:firstNum(prev));}
+    if(/^CMV:/i.test(l)){res.fat.cmv=firstNum(l);}
+    if(/Saldo\s+Bruto/i.test(l)){res.fat.saldo=firstNum(l);}
+    let mt=l.match(/Total\s+Despesas:?\s*(-?[\d.]+,\d{2})/i);
+    if(mt)res.totalPdf=Math.abs(num(mt[1]));
+    // linha de conta: começa com código de 5-6 dígitos, tem grupo, não é subtotal
+    let mc=l.match(/^(\d{5,6})\s+(.+?)\s+-?[\d.]+,\d{2}/);
+    if(mc && grupo && rows[i].nums.length && !/Contas?\s+Listadas|Total\s+Grupo/i.test(l)){
+      const cod=+mc[1];
+      const conta=l.replace(/^\d{5,6}\s+/,'').replace(/\s*-?[\d.]+,\d{2}[\s\S]*$/,'').trim();
+      // Vl. Realizado = o número cuja borda direita fica ANTES da coluna "Vl. Previsto"; se não houver, é 0 (em branco)
+      const tok=rows[i].nums.filter(n=>n.xR < boundary).sort((a,b)=>b.xR-a.xR)[0];
+      const real=tok?tok.val:0;
+      // inverte o sinal: despesa (negativa no PDF) vira positiva; crédito vira negativo
+      res.linhas.push({grupo,grupo_nome:gnome,codigo:cod,conta,valor:-real});
+    }
+  }
+  return res;
+}
+
+function showPreview(P){
+  $('#dropHint').textContent='Balancete do ERP · formato "124 - Por Conta"';
+  if(!P.linhas.length){toast('Não consegui ler linhas de despesa deste PDF','err');return;}
+  $('#previewBox').style.display='block';
+  $('#pvPeriodo').textContent=P.periodo||'não encontrado';
+  $('#pvBruto').textContent=P.fat.bruto?brl(P.fat.bruto):'—';
+  $('#pvLiquido').textContent=P.fat.liquido?brl(P.fat.liquido):'—';
+  $('#pvSaldo').textContent=P.fat.saldo?brl(P.fat.saldo):'—';
+  // competência sugerida = mês final do período
+  if(P.pfim){const[y,mo]=P.pfim.split('-');$('#pvMes').value=+mo;$('#pvAno').value=+y;}
+  const soma=P.linhas.reduce((s,r)=>s+r.valor,0);
+  $('#pvLinhas').textContent=P.linhas.length;
+  $('#pvSoma').textContent=brl2(soma);
+  $('#pvTotalPdf').textContent=P.totalPdf?brl2(P.totalPdf):'—';
+  $('#pvGrupos').textContent=P.grupos.size+' grupos';
+  const conf=$('#pvConf');
+  if(P.totalPdf){ const dif=Math.abs(soma-P.totalPdf);
+    if(dif<1){conf.className='badge g';conf.textContent='✓ Confere com o total do PDF';}
+    else{conf.className='badge b';conf.textContent='⚠ Diferença de '+brl2(dif)+' — revise';} }
+  else{conf.className='badge n';conf.textContent='total do PDF não encontrado';}
+  $('#pvBody').innerHTML=P.linhas.map(r=>`<tr><td>${r.grupo}</td><td>${r.codigo}</td><td>${r.conta}</td><td class="r tnum">${brl2(r.valor)}</td></tr>`).join('');
+  $('#pvOverlap').style.display='none';
+  refreshOverlapWarning();
+}
+const fmtBR=d=>{ if(!d) return '—'; const[y,m,dd]=(''+d).split('-'); return `${dd}/${m}/${y}`; };
+// retorna o envio já registrado cujo período se cruza com [ini,fim] (ignorando a própria competência, que é reenvio/correção); ou null
+async function overlapCheck(ini,fim,ano,mes){
+  if(DEMO||!ini||!fim) return null;
+  const {data}=await sb.from('despesas_faturamento').select('ano,mes,periodo_inicio,periodo_fim').eq('unidade',UNIDADE);
+  return (data||[]).find(r=> r.periodo_inicio && r.periodo_fim && !(r.ano===ano && r.mes===mes) && ini<=r.periodo_fim && r.periodo_inicio<=fim) || null;
+}
+async function refreshOverlapWarning(){
+  const box=$('#pvOverlap'), btn=$('#btnSalvar');
+  const c=await overlapCheck(PARSED&&PARSED.pini, PARSED&&PARSED.pfim, +$('#pvMes').value, +$('#pvAno').value);
+  if(c){ box.style.display='block';
+    box.innerHTML=`⚠ <b>Período sobreposto.</b> Os dias ${fmtBR(PARSED.pini)}–${fmtBR(PARSED.pfim)} se cruzam com um envio já registrado (${fmtBR(c.periodo_inicio)}–${fmtBR(c.periodo_fim)}, ${MESES[c.mes-1]}/${c.ano}). Dias já lançados não podem entrar de novo — ajuste o período do relatório no ERP.`;
+    btn.disabled=true; btn.style.opacity=.5; btn.style.cursor='not-allowed'; }
+  else { box.style.display='none'; btn.disabled=false; btn.style.opacity=1; btn.style.cursor='pointer'; }
+}
+$('#pvMes').addEventListener('change',refreshOverlapWarning);
+$('#pvAno').addEventListener('change',refreshOverlapWarning);
+$('#btnCancelar').onclick=()=>{$('#previewBox').style.display='none';PARSED=null;pdfInput.value='';};
+$('#btnSalvar').onclick=async()=>{
+  if(!PARSED)return;
+  const mes=+$('#pvMes').value, ano=+$('#pvAno').value;
+  const rows=PARSED.linhas.map(r=>({unidade:UNIDADE,ano,mes,grupo:r.grupo,grupo_nome:r.grupo_nome,codigo:r.codigo,conta:r.conta,valor:r.valor,periodo_inicio:PARSED.pini,periodo_fim:PARSED.pfim}));
+  const fatRow={unidade:UNIDADE,ano,mes,fat_bruto:PARSED.fat.bruto,fat_liquido:PARSED.fat.liquido,cmv:PARSED.fat.cmv,saldo_bruto:PARSED.fat.saldo,periodo_inicio:PARSED.pini,periodo_fim:PARSED.pfim};
+  if(DEMO){toast('No modo demo não grava. Configure o Supabase para salvar.','err');return;}
+  const conf=await overlapCheck(PARSED.pini,PARSED.pfim,ano,mes);
+  if(conf){toast(`Bloqueado: o período cruza com ${fmtBR(conf.periodo_inicio)}–${fmtBR(conf.periodo_fim)} (${MESES[conf.mes-1]}/${conf.ano}). Ajuste o período do relatório.`,'err');return;}
+  const r1=await sb.from('despesas').upsert(rows,{onConflict:'unidade,ano,mes,codigo'});
+  const r2=await sb.from('despesas_faturamento').upsert([fatRow],{onConflict:'unidade,ano,mes'});
+  if(r1.error||r2.error){toast('❌ '+(r1.error||r2.error).message,'err');return;}
+  toast(`Gravado: ${rows.length} despesas em ${MESES[mes-1]}/${ano}`,'ok');
+  $('#previewBox').style.display='none';PARSED=null;pdfInput.value='';
+  await loadAll(); initMonths(); renderAll();
+};
+
+/* =================== DEMO DATA =================== */
+function buildDemo(){
+  const base={'351':110000,'352':21000,'365':82000,'366':440000};
+  const contas={'351':[['ALUGUEL',42475],['ENERGIA',10770],['ÁGUA',1848],['IPTU/CIM',17167],['REFEITÓRIO',13840],['SERASA',2859]],
+    '352':[['MANUTENÇÕES DIVERSAS',19116],['MATERIAL DE LIMPEZA',1683]],
+    '365':[['SALÁRIO',47457],['INSS',19782],['FGTS',4597],['DESCARREGO',-14073],['MATERIAL DE EXPEDIENTE',6998]],
+    '366':[['SALÁRIO',96967],['COMBUSTÍVEL/GASES',68894],['DIÁRIAS',36567],['CARROS AGREGADOS',46099],['RESCISÃO',73236],['INSS',42820]]};
+  // demonstração cobrindo 2022→2026 (igual ao real), com crescimento ano a ano
+  const growth={2022:0.80,2023:0.86,2024:0.92,2025:1.0,2026:1.09};
+  const per=[]; for(let y=2022;y<=2026;y++){const maxM=(y===2026?6:12);for(let m=1;m<=maxM;m++)per.push([y,m]);}
+  DATA={desp:[],fat:[],metas:[]};
+  per.forEach(([a,m])=>{
+    const seasonal=1+Math.sin((m-1)/12*Math.PI*2)*0.05;
+    const g=(growth[a]||1)*seasonal;
+    Object.entries(contas).forEach(([grp,arr])=>{
+      arr.forEach(([nm,v],j)=>{DATA.desp.push({ano:a,mes:m,grupo:grp,grupo_nome:'',codigo:+(grp+''+(1+j)),conta:nm,valor:Math.round(v*g)});});
+    });
+    const fl=Math.round(7000000*(growth[a]||1)*seasonal);
+    DATA.fat.push({ano:a,mes:m,fat_bruto:Math.round(fl*1.05),fat_liquido:fl,cmv:Math.round(-fl*0.9),saldo_bruto:Math.round(fl*0.08)});
+  });
+  DATA.metas=[{ano:2026,mes:6,alvo:'TOTAL',valor_meta:700000},{ano:2026,mes:6,alvo:'366',valor_meta:430000},
+    {ano:2026,mes:6,alvo:'351',valor_meta:105000},{ano:2026,mes:6,alvo:'365',valor_meta:85000},{ano:2026,mes:6,alvo:'352',valor_meta:20000}];
+}
+
+/* auto-login se já tem sessão · dica se ainda não configurou */
+(async()=>{
+  if(supaReady()){ const {data}=await sb.auth.getSession(); if(data.session) startApp(data.session.user.email); }
+  else { const m=$('#loginMsg'); m.className='msg'; m.style.color='var(--dim)';
+    m.textContent='Banco ainda não configurado. Cole SUPA_URL e SUPA_KEY no topo do arquivo, ou use "Ver demonstração".'; }
+})();
+</script>
+</body>
+</html>

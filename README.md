@@ -1,0 +1,64 @@
+# Sistema de Despesas — Dilnor
+
+Controle de despesas × faturamento + metas. App separado do saaslogistica (banco Supabase próprio), mesma stack (HTML + JS + Supabase + pdf.js). Visual: dashboard escuro.
+
+## Arquivos
+
+- **index.html** — **o sistema** (é só esse arquivo). Telas: Home, Enviar Relatório, Orçamento, Detalhamento, Auditoria.
+- **_antigo/painel-escuro.html** — versão anterior (tema escuro), fora de uso. Guardada só por segurança.
+- **vercel.json** — configuração de publicação (Vercel).
+- **carga_parte_1..4_de_4.sql** — os 3.617 registros históricos (base atualizada até 23.07.2026), em 4 partes.
+- **_setup/criar_tabelas.sql** — cria as 3 tabelas no Supabase.
+- **_setup/corrigir_policies.sql** — ajusta as permissões (aceita o login .gerente).
+
+## Como colocar no ar (2 passos)
+
+### 1. Colar as chaves do Supabase no app
+- Abra **index.html** no VS Code.
+- Bem no começo do bloco `<script>` tem duas linhas marcadas **">>> COLE SUAS CHAVES <<<"**:
+  ```js
+  const SUPA_URL = '';   // cole aqui a Project URL
+  const SUPA_KEY = '';   // cole aqui a anon public key
+  ```
+- Pegue os valores em **Supabase → (projeto de despesas) → Settings → API**:
+  - **Project URL** → vai em `SUPA_URL` (ex.: `'https://xxxxx.supabase.co'`)
+  - **anon public** → vai em `SUPA_KEY` (ex.: `'eyJhbGciOi...'`)
+- Salve. (A chave anon é pública; pode ficar no arquivo — as policies do banco protegem os dados.)
+
+### 2. Publicar
+Escolha um jeito:
+- **Vercel (arrastar):** entre no vercel.com → New Project → arraste esta pasta. Pronto, vira um site.
+- **Mesmo repositório do saaslogistica:** copie esta pasta para dentro do repo (ex.: `/despesas/`) e faça deploy pelo fluxo que já usa.
+
+> Sem as chaves, o app abre em **modo demonstração** (dados de exemplo). Com as chaves, pede login (`dilnor.gerente@gestao.app`).
+
+## Setup do banco (Supabase) — só na primeira vez
+
+1. **Criar tabelas:** SQL Editor → New query → cole `_setup/criar_tabelas.sql` → Run.
+2. **Criar login:** Authentication → Users → Add user → `dilnor.gerente@gestao.app` + senha + ✅ Auto Confirm.
+3. **Corrigir permissões:** SQL Editor → cole `_setup/corrigir_policies.sql` → Run.
+4. **Carregar histórico:** rode as 4 partes `carga_parte_1..4_de_4.sql` (uma por vez).
+   - Confira: `SELECT COUNT(*) FROM despesas WHERE unidade='dilnor';` → deve dar **3617**.
+
+## Como usar (dia a dia)
+
+- **Enviar relatório:** arraste o PDF do balancete ("124 - Por Conta"). O app lê período, faturamento e as contas, confere a soma com o total do PDF, você confirma o mês de competência e grava. Reenviar o mesmo mês **atualiza** (não duplica).
+- **Metas:** defina o orçamento do mês (Total + 4 grupos). O realizado dos relatórios é comparado automaticamente (verde = dentro, vermelho = estourou).
+- **Painel:** despesa do mês × faturamento, comparativo dos grupos e evolução mensal.
+
+## Status
+
+- [x] Banco criado + histórico carregado (3.617 registros)
+- [x] App: painel, upload de PDF (parser validado, conferência bate), metas
+- [ ] Colar chaves do Supabase e publicar
+- [ ] Testar login e gravação reais
+- [ ] Tela "Análise" (comparativos ano a ano) — a fazer
+
+## Decisões registradas
+
+- **Banco:** projeto Supabase próprio (separado do saaslogistica); hospedagem pode ser a mesma.
+- **Login:** usuário dedicado (`dilnor.gerente@gestao.app`).
+- **Upload:** PDF do "124 - Balancete"; competência (mês/ano) confirmada no upload.
+- **Estrutura:** 15 grupos, destaque para os 4 principais (Geral, Predial, Depósito, Logística).
+- **Metas:** TOTAL + 4 grupos principais; gerente digita com a referência (mês anterior + realizado) à vista.
+- **Sinais:** despesa gravada positiva, crédito (juros recebidos, etc.) negativo — soma bate com o total do relatório.
