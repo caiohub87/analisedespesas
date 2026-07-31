@@ -297,6 +297,15 @@ table.tb .r{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
   color:#0F4599;border-radius:12px;padding:12px 15px;font-size:13px;line-height:1.5;margin-bottom:16px}
 .orc-banner svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;flex:none;margin-top:1px}
 .orc-banner .bfar{margin-left:auto;font-weight:700;white-space:nowrap;padding-left:14px}
+.orc-banner.rascunho{background:var(--amber-soft);border-color:#FAE2BD;color:#8A5A06}
+.orc-banner .bacts{margin-left:auto;display:flex;gap:8px;padding-left:14px;flex:none}
+.bmini{padding:7px 13px;border-radius:9px;font-size:12.5px;font-weight:700;background:var(--amber);color:#fff;
+  white-space:nowrap;transition:.15s}
+.bmini:hover{filter:brightness(.93)}
+.bmini.ghost{background:#fff;border:1px solid #FAE2BD;color:#8A5A06}
+.bmini.ghost:hover{background:#FFF7EA}
+.rasc-outros{display:block;margin-top:6px;font-size:12.3px}
+.rasc-outros a{font-weight:700;text-decoration:underline;cursor:pointer}
 
 .gform{display:grid;grid-template-columns:1fr 1fr;gap:15px 20px;padding:8px 20px 22px}
 .fld label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;font-weight:500}
@@ -616,6 +625,15 @@ table.tb .r{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
           </div>
         </div>
       </section>
+
+      <div class="orc-banner rascunho" id="orcRascunho" style="display:none">
+        <svg viewBox="0 0 24 24"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17v.01"/></svg>
+        <span><span id="orcRascunhoTxt"></span><span class="rasc-outros" id="orcRascOutros"></span></span>
+        <span class="bacts">
+          <button class="bmini" id="btnRestaurar">Restaurar</button>
+          <button class="bmini ghost" id="btnDescartarRasc">Descartar</button>
+        </span>
+      </div>
 
       <div class="orc-banner" id="orcBanner" style="display:none">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8v.01"/></svg>
@@ -1261,8 +1279,11 @@ const VIEWS={
 };
 function irPara(p,nome){
   const v=VIEWS[p];
-  if(p!=='orcamento'&&$('#v-orcamento').classList.contains('on')&&typeof ORC==='object'&&ORC.sujo
-     &&!confirm('Há metas preenchidas que ainda não foram salvas. Sair desta tela vai descartá-las. Continuar?'))return;
+  /* sair do Orçamento com trabalho pendente não perde nada: vira rascunho */
+  if(p!=='orcamento'&&$('#v-orcamento').classList.contains('on')&&typeof ORC==='object'&&ORC.sujo){
+    salvarRascunho();
+    toast('Metas ainda não salvas foram guardadas como rascunho neste navegador','ok');
+  }
   $$('#nav a').forEach(x=>x.classList.toggle('active',x.dataset.p===p));
   $$('.view').forEach(x=>x.classList.remove('on'));
   $('#filters').style.display=(v&&v.filtros)?'flex':'none';
@@ -1493,6 +1514,78 @@ function capturarCampos(){
   $$('#orcGrupos .mmeta').forEach(i=>{ORC.vals[i.dataset.alvo]=parseMoeda(i.value);});
   $$('#orcGrupos .mobs').forEach(i=>{ORC.obs[i.dataset.alvo]=i.value;});
 }
+
+/* ---- rascunho no navegador: o que foi digitado e ainda não salvo sobrevive
+       a fechar o navegador, travar a máquina ou trocar de mês ---- */
+const RASC_KEY='dilnor.orcamento.rascunhos';
+const rascChave=(a,m)=>`${a}-${m}`;
+function lerRascunhos(){
+  try{const o=JSON.parse(localStorage.getItem(RASC_KEY)||'{}');
+    return (o&&o.unidade===UNIDADE&&o.itens)?o.itens:{};}catch(e){return {};}
+}
+function gravarRascunhos(itens){
+  try{localStorage.setItem(RASC_KEY,JSON.stringify({unidade:UNIDADE,itens}));}
+  catch(e){console.warn('rascunho não pôde ser guardado',e);}
+}
+function salvarRascunho(){
+  if(!ORC.sujo||ORC.ano==null)return;
+  capturarCampos();
+  const itens=lerRascunhos();
+  itens[rascChave(ORC.ano,ORC.mes)]={ano:ORC.ano,mes:ORC.mes,ts:Date.now(),
+    gerais:{fat:$('#gFat').value,lim:$('#gLim').value,eco:$('#gEco').value,pct:$('#gPct').value,obs:$('#gObs').value},
+    contas:[...ORC.contas],vals:ORC.vals,obs:ORC.obs};
+  gravarRascunhos(itens);
+}
+function apagarRascunho(a,m){
+  const itens=lerRascunhos(); delete itens[rascChave(a,m)]; gravarRascunhos(itens);
+}
+let rascTimer;
+const agendarRascunho=()=>{clearTimeout(rascTimer);rascTimer=setTimeout(salvarRascunho,500);};
+
+function mostrarAvisoRascunho(){
+  const {a,m}=orcComp(), itens=lerRascunhos();
+  const meu=itens[rascChave(a,m)];
+  const outros=Object.values(itens).filter(d=>!(d.ano===a&&d.mes===m));
+  if(!meu&&!outros.length){$('#orcRascunho').style.display='none';return;}
+  if(meu){
+    const d=new Date(meu.ts);
+    $('#orcRascunhoTxt').innerHTML=`Você tem metas de <b>${MESES[m-1]} de ${a}</b> digitadas e
+      <b>ainda não salvas</b>, guardadas neste navegador em ${d.toLocaleDateString('pt-BR')}
+      às ${d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}.`;
+    $('.bacts').style.display='flex';
+  }else{
+    $('#orcRascunhoTxt').innerHTML='Nenhum rascunho para este mês.';
+    $('.bacts').style.display='none';
+  }
+  $('#orcRascOutros').innerHTML=outros.length
+    ? 'Também há rascunho não salvo em: '+outros.map(d=>
+        `<a data-ir-mes="${d.ano}-${d.mes}">${MESES[d.mes-1].toLowerCase()} de ${d.ano}</a>`).join(', ')+'.'
+    : '';
+  $('#orcRascunho').style.display='flex';
+}
+function restaurarRascunho(){
+  const {a,m}=orcComp(), d=lerRascunhos()[rascChave(a,m)];
+  if(!d){toast('Não há rascunho para este mês','err');return;}
+  $('#gFat').value=d.gerais.fat; $('#gLim').value=d.gerais.lim;
+  $('#gEco').value=d.gerais.eco; $('#gPct').value=d.gerais.pct; $('#gObs').value=d.gerais.obs;
+  ORC.contas=new Set(d.contas||[]); ORC.vals=d.vals||{}; ORC.obs=d.obs||{};
+  ORC.abertos=new Set([...ORC.contas].map(c=>contaInfo(c).grupo));
+  buildFiltroArea(); renderOrcGrupos(); marcarSujo(true);
+  $('#orcRascunho').style.display='none';
+  banner('Rascunho restaurado. Confira os valores e clique em "Salvar metas" para gravar no banco.','');
+  toast('Rascunho restaurado','ok');
+}
+$('#btnRestaurar').onclick=restaurarRascunho;
+$('#btnDescartarRasc').onclick=()=>{
+  const {a,m}=orcComp();
+  if(!confirm(`Descartar o rascunho não salvo de ${MESES[m-1]} de ${a}? Isso não pode ser desfeito.`))return;
+  apagarRascunho(a,m); carregarOrcamento(a,m); toast('Rascunho descartado','ok');
+};
+$('#orcRascunho').addEventListener('click',e=>{
+  const a=e.target.closest('[data-ir-mes]'); if(!a)return;
+  const [ano,mes]=a.dataset.irMes.split('-').map(Number);
+  salvarRascunho(); carregarOrcamento(ano,mes);
+});
 const metaLinha=(a,m,alvo)=>DATA.metas.find(r=>r.ano===a&&r.mes===m&&r.alvo===alvo)||null;
 const metaObs=(a,m,alvo)=>{const x=metaLinha(a,m,alvo);return x&&x.observacao?x.observacao:'';};
 const mesAnterior=(a,m)=>m===1?{a:a-1,m:12}:{a,m:m-1};
@@ -1535,8 +1628,9 @@ function andarMes(passo){
 }
 function trocarMes(ano,mes){
   const a=ano??+$('#orcAno').value, m=mes??+$('#orcMes').value;
-  if(ORC.sujo&&!confirm('Há alterações não salvas neste mês. Trocar de mês vai descartá-las. Continuar?')){
-    $('#orcAno').value=ORC.ano; $('#orcMes').value=ORC.mes; return;
+  if(ORC.sujo){   /* não perde nada: vira rascunho e volta quando reabrir o mês */
+    salvarRascunho();
+    toast(`Metas de ${MESES[ORC.mes-1]} guardadas como rascunho (ainda não salvas no banco)`,'ok');
   }
   carregarOrcamento(a,m);
 }
@@ -1558,7 +1652,7 @@ function carregarOrcamento(ano,mes){
 
   $('#orcBusca').value=''; $('#addWrap').style.display='none';
   banner(null); marcarSujo(false); mostrarUltimaAtualizacao(a,m);
-  buildFiltroArea(); renderOrcGrupos();
+  buildFiltroArea(); renderOrcGrupos(); mostrarAvisoRascunho();
 }
 function buildFiltroArea(){
   const usadas=[...ORC.contas].map(c=>contaInfo(c).grupo);
@@ -1651,7 +1745,7 @@ $('#gPct').addEventListener('blur',()=>{
 });
 $('#gEco').addEventListener('blur',()=>{$('#gEco').value=fmtMoeda(parseMoeda($('#gEco').value));});
 $('#v-orcamento').addEventListener('input',e=>{
-  if(e.target.matches('input,textarea,select'))marcarSujo(true);
+  if(e.target.matches('input,textarea,select')){marcarSujo(true);agendarRascunho();}
 });
 
 /* accordion + remover + formatar valores das linhas */
@@ -1687,7 +1781,7 @@ function removerConta(cod){
   if(salva&&!confirm(`Remover a meta de ${contaInfo(cod).nome} em ${MESES[m-1]} de ${a}?\n\nA remoção só vale depois de clicar em "Salvar metas".`))return;
   capturarCampos();
   ORC.contas.delete(cod); delete ORC.vals[cod]; delete ORC.obs[cod];
-  marcarSujo(true); buildFiltroArea(); renderOrcGrupos();
+  marcarSujo(true); buildFiltroArea(); renderOrcGrupos(); salvarRascunho();
 }
 
 /* adicionar conta */
@@ -1710,7 +1804,7 @@ function adicionarConta(){
   capturarCampos();
   ORC.contas.add(alvo.cod); ORC.abertos.add(alvo.grupo);
   $('#mcBusca').value=''; $('#addWrap').style.display='none';
-  marcarSujo(true); buildFiltroArea(); renderOrcGrupos();
+  marcarSujo(true); buildFiltroArea(); renderOrcGrupos(); salvarRascunho();
   const inp=$(`.mmeta[data-alvo="${alvo.cod}"]`);
   if(inp){inp.focus();inp.scrollIntoView({block:'center',behavior:'smooth'});}
 }
@@ -1734,7 +1828,7 @@ function copiarMesAnterior(){
   ORC.vals={}; ORC.obs={};
   $$('#orcGrupos .mmeta').forEach(i=>{ORC.vals[i.dataset.alvo]=null;});
   linhas.forEach(r=>{ORC.vals[r.alvo]=+r.valor_meta; ORC.obs[r.alvo]=r.observacao||'';});
-  buildFiltroArea(); renderOrcGrupos(); marcarSujo(true);
+  buildFiltroArea(); renderOrcGrupos(); marcarSujo(true); salvarRascunho();
   banner(`As metas deste mês foram copiadas do mês anterior. As alterações afetarão somente ${MESES[m-1]} de ${a}, e só valem depois de salvar.`,
     `Copiado de ${MESES[ant.m-1].toLowerCase()} de ${ant.a}`);
 }
@@ -1749,11 +1843,12 @@ $('#btnLimpar').onclick=()=>{
   ORC.vals={}; ORC.obs={};
   $$('#orcGrupos .mmeta').forEach(i=>{ORC.vals[i.dataset.alvo]=null;});
   ORC.contas=new Set(); buildFiltroArea(); renderOrcGrupos();
-  marcarSujo(true); banner('Os campos foram limpos. Clique em "Salvar metas" para apagar as metas deste mês no banco.','');
+  marcarSujo(true); salvarRascunho(); banner('Os campos foram limpos. Clique em "Salvar metas" para apagar as metas deste mês no banco.','');
 };
 $('#btnCancelarOrc').onclick=()=>{
-  if(ORC.sujo&&!confirm('Descartar as alterações não salvas deste mês?'))return;
-  carregarOrcamento(); toast('Alterações descartadas','ok');
+  const {a,m}=orcComp();
+  if(ORC.sujo&&!confirm(`Descartar as alterações não salvas de ${MESES[m-1]} de ${a}?\n\nO rascunho guardado neste navegador também será apagado. Isso não pode ser desfeito.`))return;
+  apagarRascunho(a,m); carregarOrcamento(a,m); toast('Alterações descartadas','ok');
 };
 
 /* ---- salvar ---- */
@@ -1801,9 +1896,24 @@ $('#btnSalvarMetas').onclick=async()=>{
   const partes=[];
   if(gravar.length)partes.push(`${gravar.length} meta(s) salva(s)`);
   if(apagar.length)partes.push(`${apagar.length} removida(s)`);
+  apagarRascunho(a,m);   /* já está no banco: o rascunho local não é mais necessário */
   toast(`${partes.join(' · ')} em ${MESES[m-1]} de ${a}`,'ok');
-  carregarOrcamento();
+  carregarOrcamento(a,m);
 };
+
+/* ---- avisa antes de fechar o navegador com trabalho não gravado ---- */
+function pendencias(){
+  const p=[];
+  if(typeof ORC==='object'&&ORC.sujo)p.push('metas preenchidas e não salvas');
+  if(typeof PARSED!=='undefined'&&PARSED)p.push('um relatório lido e ainda não gravado');
+  return p;
+}
+addEventListener('beforeunload',e=>{
+  salvarRascunho();               /* garante o rascunho mesmo se fechar no meio da digitação */
+  if(!pendencias().length)return;
+  e.preventDefault(); e.returnValue='';   /* o navegador mostra o aviso padrão dele */
+  return '';
+});
 
 /* ============ ANÁLISE POR ÁREA — ACOMPANHAMENTO DE METAS ============ */
 const SIT=pc=>pc>100?{cls:'bad',cor:'var(--red)',txt:'estourou'}
