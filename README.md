@@ -43,7 +43,8 @@ Escolha um jeito:
 ## Como usar (dia a dia)
 
 - **Enviar relatório:** arraste o PDF do balancete ("124 - Por Conta"). O app lê período, faturamento e as contas, confere a soma com o total do PDF, você confirma o mês de competência e grava. Reenviar o mesmo mês **atualiza** (não duplica).
-- **Metas:** defina o orçamento do mês (Total + 4 grupos). O realizado dos relatórios é comparado automaticamente (verde = dentro, vermelho = estourou).
+- **Orçamento:** defina o teto do mês para o Total, para as 4 áreas e **para contas individuais** (ex.: Água, Energia, Combustível). Busque a conta pelo nome e clique em "Adicionar conta". Apagar o valor e salvar remove a meta.
+- **Análise por Área:** acompanhamento das metas do mês — quanto foi orçado, quanto já saiu, saldo e quais estouraram, por área e por conta.
 - **Painel:** despesa do mês × faturamento, comparativo dos grupos e evolução mensal.
 
 ## Status
@@ -60,5 +61,5 @@ Escolha um jeito:
 - **Login:** usuário dedicado (`dilnor.gerente@gestao.app`).
 - **Upload:** PDF do "124 - Balancete"; competência (mês/ano) confirmada no upload.
 - **Estrutura:** 15 grupos, destaque para os 4 principais (Geral, Predial, Depósito, Logística).
-- **Metas:** TOTAL + 4 grupos principais; gerente digita com a referência (mês anterior + realizado) à vista.
+- **Metas:** TOTAL + 4 grupos principais + qualquer conta individual (subclasse). Na tabela `metas`, a coluna `alvo` guarda `'TOTAL'`, o código da área (3 dígitos, ex.: `'366'`) ou o código da conta (5 dígitos, ex.: `'35103'` = Água). Gerente digita com a referência (mês anterior + realizado) à vista.
 - **Sinais:** despesa gravada positiva, crédito (juros recebidos, etc.) negativo — soma bate com o total do relatório.

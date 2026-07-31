@@ -254,6 +254,39 @@ table.tb .r{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
 .prog .bar i{display:block;height:100%;border-radius:20px;transition:width .5s cubic-bezier(.2,.8,.2,1)}
 .prog .lb{display:flex;justify-content:space-between;font-size:11.5px;margin-top:5px;color:var(--muted)}
 .prog .lb b{font-weight:700}
+.chip.warn{background:var(--amber-soft);color:#8A5A06}
+
+/* metas por conta (subclasse) */
+.msub{margin-top:20px;padding-top:16px;border-top:2px solid var(--line)}
+.msub-h{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:4px}
+.msub-h b{font-size:14px;font-weight:700}
+.msub-h span{font-size:12px;color:var(--faint)}
+.addbar{display:flex;gap:9px;margin:11px 0 4px;flex-wrap:wrap}
+.addbar input{flex:1;min-width:180px;background:#F8FAFC;border:1px solid var(--line);border-radius:10px;
+  padding:10px 12px;font-size:13.5px;font-weight:500}
+.addbar input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(27,107,227,.12);background:#fff}
+.addbar button{padding:10px 16px;border-radius:10px;font-size:13.2px;font-weight:600;
+  background:var(--blue-soft);color:var(--blue);white-space:nowrap;transition:.15s}
+.addbar button:hover{background:var(--blue);color:#fff}
+.meta-line .rm{width:30px;height:30px;border-radius:8px;flex:none;display:grid;place-items:center;
+  color:var(--faint);background:none;transition:.14s}
+.meta-line .rm:hover{background:var(--red-soft);color:var(--red)}
+.meta-line .rm svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round}
+.pill-area{display:inline-block;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:20px;
+  background:var(--line2);color:var(--muted);margin-left:6px;vertical-align:1px}
+
+/* acompanhamento de metas (Análise por Área) */
+.mcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px;padding:8px 20px 20px}
+.mcard{border:1px solid var(--line);border-radius:13px;padding:15px 16px;background:#fff}
+.mcard.off{background:#FBFCFE;border-style:dashed;border-color:#D6E0EE}
+.mcard.wide{grid-column:1/-1;background:linear-gradient(180deg,#FAFCFF,#fff)}
+.mc-h{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.mc-h b{font-size:13.5px;font-weight:700;letter-spacing:-.01em}
+.mc-v{font-size:20px;font-weight:800;letter-spacing:-.03em;margin-top:9px;font-variant-numeric:tabular-nums}
+.mcard.wide .mc-v{font-size:26px}
+.mc-s{font-size:11.8px;color:var(--faint);margin-top:3px}
+.mc-link{font-size:12.5px;color:var(--blue);font-weight:600;margin-top:9px;cursor:pointer;display:inline-block}
+.mc-link:hover{text-decoration:underline}
 
 /* busca */
 .search{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);
@@ -289,6 +322,7 @@ table.tb .r{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
   .fchip select{max-width:120px}
   .pv-grid{grid-template-columns:1fr}
   .meta-line input{width:100%}
+  .mcards{grid-template-columns:1fr}
 }
 @media(max-width:560px){
   .kpis{grid-template-columns:1fr}
@@ -485,6 +519,25 @@ table.tb .r{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
           <div class="pv-body" id="metaProgresso"></div>
         </section>
       </div>
+      <datalist id="mcLista"></datalist>
+    </div>
+
+    <!-- ============ ANÁLISE POR ÁREA (ACOMPANHAMENTO DE METAS) ============ -->
+    <div class="view" id="v-area">
+      <div class="kpis" id="areaKpis" style="grid-template-columns:repeat(4,minmax(0,1fr))"></div>
+      <section class="panel" style="margin-bottom:18px">
+        <div class="panel-h"><h2>Metas por área</h2>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+            <span class="chip neutral" id="areaChip">—</span>
+            <select id="areaMes" style="border:1px solid var(--line);border-radius:9px;padding:7px 10px;font-size:13px;font-weight:600"></select>
+          </div>
+        </div>
+        <div class="mcards" id="areaCards"></div>
+      </section>
+      <section class="panel">
+        <div class="panel-h"><h2>Metas por conta</h2><span class="chip neutral" id="areaContaChip">—</span></div>
+        <div id="areaContas"></div>
+      </section>
     </div>
 
     <!-- ============ DETALHAMENTO ============ -->
@@ -519,8 +572,9 @@ table.tb .r{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
         <svg viewBox="0 0 24 24"><path d="M12 3l8 4v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V7z"/><path d="M12 9v4M12 16.5v.01"/></svg>
         <b style="display:block;font-size:15px;color:var(--ink);margin-bottom:6px" id="breveTitulo">Em construção</b>
         Esta tela ainda não foi construída. As telas prontas são <b style="color:var(--blue)">Home</b>,
-        <b style="color:var(--blue)">Enviar Relatório</b>, <b style="color:var(--blue)">Orçamento</b>,
-        <b style="color:var(--blue)">Detalhamento</b> e <b style="color:var(--blue)">Auditoria</b>.
+        <b style="color:var(--blue)">Enviar Relatório</b>, <b style="color:var(--blue)">Análise por Área</b>,
+        <b style="color:var(--blue)">Orçamento</b>, <b style="color:var(--blue)">Detalhamento</b>
+        e <b style="color:var(--blue)">Auditoria</b>.
       </div></section>
     </div>
 
@@ -1047,7 +1101,8 @@ $('#sbBack').onclick=()=>document.body.classList.remove('navopen');
 const VIEWS={
   home:{el:'v-home',t:'HOME – Dashboard de Despesas',s:null,filtros:true},
   enviar:{el:'v-enviar',t:'Enviar Relatório',s:'Suba o balancete do ERP · o sistema confere e grava sem duplicar',filtros:false},
-  orcamento:{el:'v-orcamento',t:'Orçamento',s:'Defina a meta do mês · o realizado é comparado automaticamente',filtros:false},
+  orcamento:{el:'v-orcamento',t:'Orçamento',s:'Defina a meta do mês por área e por conta · o realizado é comparado automaticamente',filtros:false},
+  area:{el:'v-area',t:'Análise por Área',s:'Acompanhamento das metas por área e por conta',filtros:false},
   detalhe:{el:'v-detalhe',t:'Detalhamento',s:'Todos os lançamentos que formam os indicadores',filtros:true},
   auditoria:{el:'v-auditoria',t:'Auditoria',s:'Conferência de integridade e conciliação da base',filtros:false}
 };
@@ -1067,7 +1122,8 @@ function irPara(p,nome){
   $('.pg-head h1').textContent=v.t;
   if(v.s)$('#pgSub').textContent=v.s;
   if(p==='home')render();
-  if(p==='orcamento'){buildMetaMeses();renderMetaForm();}
+  if(p==='orcamento'){buildMetaMeses();carregarMesMeta();}
+  if(p==='area')renderArea();
   if(p==='detalhe')renderDetalhe();
   if(p==='auditoria')renderAuditoria();
 }
@@ -1222,47 +1278,98 @@ const ALVOS=[['TOTAL','Despesa total','todos os grupos'],['351','Geral','código
   ['352','Predial','código 352'],['365','Depósito','código 365'],['366','Logística','código 366']];
 const totalMes=(a,m)=>somaRows(DATA.desp.filter(r=>r.ano===a&&r.mes===m));
 const grupoMes=(a,m,g)=>somaRows(DATA.desp.filter(r=>r.ano===a&&r.mes===m&&r.grupo===g));
+const contaMes=(a,m,c)=>somaRows(DATA.desp.filter(r=>r.ano===a&&r.mes===m&&String(r.codigo)===String(c)));
 const metaMes=(a,m,alvo)=>{const x=DATA.metas.find(r=>r.ano===a&&r.mes===m&&r.alvo===alvo);return x?+x.valor_meta:null;};
-const realizado=(a,m,alvo)=>alvo==='TOTAL'?totalMes(a,m):grupoMes(a,m,alvo);
+/* alvo: 'TOTAL' | grupo de 3 dígitos (351) | conta de 5 dígitos (35103 = ÁGUA) */
+const ehConta=alvo=>/^\d{4,}$/.test(alvo);
+const realizado=(a,m,alvo)=>alvo==='TOTAL'?totalMes(a,m):ehConta(alvo)?contaMes(a,m,alvo):grupoMes(a,m,alvo);
 
-function buildMetaMeses(){
-  const sel=$('#metaMes'); if(sel.dataset.pronto&&sel.value)return;
+/* catálogo de contas: código, nome mais recente e área a que pertence */
+function catalogoContas(){
+  const map=new Map();
+  DATA.desp.forEach(r=>{
+    const k=String(r.codigo), ord=r.ano*100+r.mes, cur=map.get(k);
+    if(!cur||ord>cur.ord) map.set(k,{cod:k,nome:r.conta||('Conta '+k),grupo:r.grupo,ord});
+  });
+  return [...map.values()].sort((x,y)=>String(x.nome).localeCompare(String(y.nome),'pt-BR'));
+}
+const contaInfo=c=>catalogoContas().find(x=>x.cod===String(c))||{cod:String(c),nome:'Conta '+c,grupo:String(c).slice(0,3)};
+const nomeAlvo=alvo=>alvo==='TOTAL'?'Despesa total':ehConta(alvo)?contaInfo(alvo).nome:areaNome(alvo);
+
+function listaCompetencias(){
   const chaves=[...new Set(DATA.desp.map(r=>r.ano*100+r.mes))].sort((a,b)=>b-a);
   const topo=chaves[0]||(new Date().getFullYear()*100+1);
   const futuros=[]; let a=Math.floor(topo/100),m=topo%100;
   for(let i=0;i<3;i++){m++;if(m>12){m=1;a++;}futuros.push(a*100+m);}
-  const lista=[...futuros.reverse(),...chaves];
+  return {lista:[...futuros.reverse(),...chaves],topo};
+}
+function buildSeletorMes(sel){
+  if(!sel||(sel.dataset.pronto&&sel.value))return;
+  const {lista,topo}=listaCompetencias();
   sel.innerHTML=lista.map(v=>`<option value="${v}">${MESES[v%100-1]} ${Math.floor(v/100)}</option>`).join('');
   sel.value=topo; sel.dataset.pronto='1';
+}
+const buildMetaMeses=()=>buildSeletorMes($('#metaMes'));
+
+/* contas exibidas no formulário do mês (salvas + adicionadas agora) */
+let CONTAS_META=new Set();
+function carregarMesMeta(){
+  const v=+$('#metaMes').value, a=Math.floor(v/100), m=v%100;
+  CONTAS_META=new Set(DATA.metas.filter(r=>r.ano===a&&r.mes===m&&ehConta(r.alvo)).map(r=>String(r.alvo)));
+  renderMetaForm();
+}
+function linhaMeta(alvo,titulo,sub,a,m,pa,pm,removivel){
+  return `<div class="meta-line">
+    <div class="mi"><b>${esc(titulo)}</b><span>${esc(sub)}</span>
+      <div class="ref">Mês anterior: <b>${brl(realizado(pa,pm,alvo))}</b> · Realizado atual: <b>${brl(realizado(a,m,alvo))}</b></div>
+    </div>
+    <input class="mmeta" data-alvo="${alvo}" type="number" step="0.01" min="0" placeholder="R$ meta" value="${metaMes(a,m,alvo)??''}">
+    ${removivel?`<button class="rm" data-alvo="${alvo}" title="Remover esta conta">
+      <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>`:''}
+  </div>`;
 }
 function renderMetaForm(){
   const v=+$('#metaMes').value, a=Math.floor(v/100), m=v%100;
   const pa=m===1?a-1:a, pm=m===1?12:m-1;
-  $('#metaForm').innerHTML=ALVOS.map(([al,nm,cod])=>`
-    <div class="meta-line">
-      <div class="mi"><b>${nm}</b><span>${cod}</span>
-        <div class="ref">Mês anterior: <b>${brl(realizado(pa,pm,al))}</b> · Realizado atual: <b>${brl(realizado(a,m,al))}</b></div>
+
+  const areas=ALVOS.map(([al,nm,cod])=>linhaMeta(al,nm,cod,a,m,pa,pm,false)).join('');
+  const contas=[...CONTAS_META]
+    .map(c=>contaInfo(c))
+    .sort((x,y)=>String(x.nome).localeCompare(String(y.nome),'pt-BR'))
+    .map(c=>linhaMeta(c.cod,c.nome,`código ${c.cod} · ${areaNome(c.grupo)}`,a,m,pa,pm,true)).join('');
+
+  $('#metaForm').innerHTML=areas+`
+    <div class="msub">
+      <div class="msub-h"><b>Metas por conta</b><span>ex.: Água, Energia, Combustível</span></div>
+      <div class="addbar">
+        <input id="mcBusca" list="mcLista" placeholder="Digite o nome da conta… ex.: ÁGUA" autocomplete="off">
+        <button id="btnAddConta" type="button">Adicionar conta</button>
       </div>
-      <input class="mmeta" data-alvo="${al}" type="number" step="0.01" placeholder="R$ meta" value="${metaMes(a,m,al)??''}">
-    </div>`).join('');
+      ${contas||`<div class="empty" style="padding:22px 6px;text-align:left">
+        Nenhuma meta por conta neste mês. Busque a conta acima para definir um teto individual.</div>`}
+    </div>`;
+
+  $('#mcLista').innerHTML=catalogoContas()
+    .map(c=>`<option value="${esc(c.cod)} · ${esc(c.nome)}">${esc(areaNome(c.grupo))}</option>`).join('');
   renderMetaProgresso(a,m);
 }
 function renderMetaProgresso(a,m){
-  const linhas=ALVOS.map(([al,nm])=>({al,nm,meta:metaMes(a,m,al),real:realizado(a,m,al)}));
+  const alvos=[...ALVOS.map(([al,nm])=>({al,nm,conta:false})),
+    ...[...CONTAS_META].map(c=>({al:c,nm:contaInfo(c).nome,conta:true}))];
+  const linhas=alvos.map(x=>({...x,meta:metaMes(a,m,x.al),real:realizado(a,m,x.al)}));
   const definidas=linhas.filter(l=>l.meta>0);
-  $('#metaStatus').textContent=definidas.length?`${definidas.length} de ${ALVOS.length} definidas`:'nenhuma meta definida';
+  $('#metaStatus').textContent=definidas.length?`${definidas.length} meta(s) definida(s)`:'nenhuma meta definida';
   $('#metaStatus').className='chip '+(definidas.length?'ok':'neutral');
   if(!definidas.length){
     $('#metaProgresso').innerHTML=`<div class="empty" style="padding:34px 10px">
       Defina as metas ao lado para acompanhar o quanto já foi gasto em ${MESES[m-1]} de ${a}.</div>`;
     return;
   }
-  $('#metaProgresso').innerHTML=linhas.map(l=>{
-    if(!(l.meta>0))return '';
+  const bloco=l=>{
     const pc=l.meta>0?l.real/l.meta*100:0, estourou=pc>100;
     return `<div style="padding:11px 0;border-bottom:1px solid var(--line2)">
-      <div style="display:flex;justify-content:space-between;align-items:baseline">
-        <b style="font-size:13.5px">${l.nm}</b>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px">
+        <b style="font-size:13.5px">${esc(l.nm)}${l.conta?'<span class="pill-area">conta</span>':''}</b>
         <b style="font-size:13px;color:${estourou?'var(--red)':'var(--green)'}">${pct(pc,0)}</b></div>
       <div class="prog"><div class="bar"><i style="width:${Math.min(pc,100).toFixed(1)}%;
         background:${estourou?'var(--red)':'var(--blue)'}"></i></div>
@@ -1270,22 +1377,167 @@ function renderMetaProgresso(a,m){
           <span>${estourou?`<b style="color:var(--red)">${brl(l.real-l.meta)} acima</b>`
             :`<b style="color:var(--green)">${brl(l.meta-l.real)} disponível</b>`}</span></div></div>
     </div>`;
-  }).join('');
+  };
+  $('#metaProgresso').innerHTML=definidas.map(bloco).join('');
 }
-$('#metaMes').addEventListener('change',renderMetaForm);
+$('#metaMes').addEventListener('change',carregarMesMeta);
+
+/* adicionar / remover conta no formulário */
+function addContaMeta(){
+  const raw=($('#mcBusca').value||'').trim();
+  if(!raw){toast('Escolha uma conta na lista','err');return;}
+  const cat=catalogoContas();
+  const porCod=(raw.match(/^\s*(\d{3,7})/)||[])[1];
+  const alvo=(porCod&&cat.find(c=>c.cod===porCod))
+    ||cat.find(c=>String(c.nome).toLowerCase()===raw.toLowerCase());
+  if(!alvo){toast('Conta não encontrada. Escolha uma opção da lista.','err');return;}
+  if(CONTAS_META.has(alvo.cod)){toast(`${alvo.nome} já está na lista`,'err');return;}
+  CONTAS_META.add(alvo.cod);
+  renderMetaForm();
+  const inp=$(`.mmeta[data-alvo="${alvo.cod}"]`);
+  if(inp){inp.focus();inp.scrollIntoView({block:'center',behavior:'smooth'});}
+}
+$('#metaForm').addEventListener('click',async e=>{
+  if(e.target.closest('#btnAddConta')){addContaMeta();return;}
+  const b=e.target.closest('.rm'); if(!b)return;
+  const alvo=b.dataset.alvo;
+  const v=+$('#metaMes').value, a=Math.floor(v/100), m=v%100;
+  const salva=metaMes(a,m,alvo)!=null;
+  if(salva&&!confirm(`Remover a meta de ${contaInfo(alvo).nome} em ${MESES[m-1]} de ${a}?`))return;
+  CONTAS_META.delete(alvo);
+  if(salva){
+    $('#loading').classList.add('on');
+    const {error}=await sb.from('metas').delete()
+      .eq('unidade',UNIDADE).eq('ano',a).eq('mes',m).eq('alvo',alvo);
+    if(error){$('#loading').classList.remove('on');toast('Erro ao remover: '+error.message,'err');return;}
+    await loadAll(); $('#loading').classList.remove('on');
+    toast('Meta removida','ok');
+  }
+  renderMetaForm();
+});
+$('#metaForm').addEventListener('keydown',e=>{
+  if(e.target.id==='mcBusca'&&e.key==='Enter'){e.preventDefault();addContaMeta();}
+});
+
 $('#btnSalvarMetas').onclick=async()=>{
   const v=+$('#metaMes').value, a=Math.floor(v/100), m=v%100;
-  const rows=$$('.mmeta').filter(i=>i.value!=='').map(i=>({unidade:UNIDADE,ano:a,mes:m,
-    alvo:i.dataset.alvo,valor_meta:+i.value}));
-  if(!rows.length){toast('Preencha ao menos uma meta','err');return;}
+  const gravar=[], apagar=[];
+  for(const i of $$('.mmeta')){
+    const alvo=i.dataset.alvo, txt=i.value.trim();
+    if(txt===''){ if(metaMes(a,m,alvo)!=null)apagar.push(alvo); continue; }
+    const val=+txt;
+    if(!isFinite(val)||val<0){toast(`Valor inválido em ${nomeAlvo(alvo)}`,'err');i.focus();return;}
+    gravar.push({unidade:UNIDADE,ano:a,mes:m,alvo,valor_meta:val});
+  }
+  if(!gravar.length&&!apagar.length){toast('Preencha ao menos uma meta','err');return;}
   $('#loading').classList.add('on');
-  const {error}=await sb.from('metas').upsert(rows,{onConflict:'unidade,ano,mes,alvo'});
-  if(error){$('#loading').classList.remove('on');toast('Erro ao salvar: '+error.message,'err');return;}
+  if(apagar.length){
+    const {error}=await sb.from('metas').delete()
+      .eq('unidade',UNIDADE).eq('ano',a).eq('mes',m).in('alvo',apagar);
+    if(error){$('#loading').classList.remove('on');toast('Erro ao remover: '+error.message,'err');return;}
+  }
+  if(gravar.length){
+    const {error}=await sb.from('metas').upsert(gravar,{onConflict:'unidade,ano,mes,alvo'});
+    if(error){$('#loading').classList.remove('on');toast('Erro ao salvar: '+error.message,'err');return;}
+  }
   await loadAll();
   $('#loading').classList.remove('on');
-  toast(`Metas salvas para ${MESES[m-1]} de ${a}`,'ok');
-  renderMetaForm();
+  const partes=[];
+  if(gravar.length)partes.push(`${gravar.length} meta(s) salva(s)`);
+  if(apagar.length)partes.push(`${apagar.length} removida(s)`);
+  toast(`${partes.join(' · ')} em ${MESES[m-1]} de ${a}`,'ok');
+  carregarMesMeta();
 };
+
+/* ============ ANÁLISE POR ÁREA — ACOMPANHAMENTO DE METAS ============ */
+const SIT=pc=>pc>100?{cls:'bad',cor:'var(--red)',txt:'estourou'}
+  :pc>=90?{cls:'warn',cor:'var(--amber)',txt:'no limite'}
+  :{cls:'ok',cor:'var(--blue)',txt:'dentro'};
+
+function renderArea(){
+  buildSeletorMes($('#areaMes'));
+  const v=+$('#areaMes').value, a=Math.floor(v/100), m=v%100;
+  const doMes=DATA.metas.filter(r=>r.ano===a&&r.mes===m&&+r.valor_meta>0);
+  const grupos=doMes.filter(r=>!ehConta(r.alvo)&&r.alvo!=='TOTAL');
+  const contas=doMes.filter(r=>ehConta(r.alvo));
+  const geral=doMes.find(r=>r.alvo==='TOTAL');
+
+  /* KPIs: soma só das áreas + contas (TOTAL entra à parte para não contar duas vezes) */
+  const orcado=[...grupos,...contas].reduce((s,r)=>s+ +r.valor_meta,0);
+  const realiz=[...grupos,...contas].reduce((s,r)=>s+realizado(a,m,r.alvo),0);
+  const estouradas=doMes.filter(r=>realizado(a,m,r.alvo)>+r.valor_meta).length;
+  const saldo=orcado-realiz;
+
+  $('#areaChip').textContent=doMes.length?`${doMes.length} meta(s) em ${MESES[m-1]}`:'sem metas neste mês';
+  $('#areaChip').className='chip '+(doMes.length?(estouradas?'bad':'ok'):'neutral');
+
+  const kpi=(lb,vl,fo,cor,bg)=>`<div class="panel kpi"><div class="ic" style="background:${bg};color:${cor}">
+      <svg viewBox="0 0 24 24" stroke="currentColor"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg></div>
+    <div style="min-width:0"><div class="lb">${lb}</div><div class="vl" style="color:${cor}">${vl}</div>
+      <div class="fo">${fo}</div></div></div>`;
+  $('#areaKpis').innerHTML=
+    kpi('Total orçado',brl0(orcado),`${grupos.length} área(s) · ${contas.length} conta(s)`,'var(--ink)','#EEF2F8')+
+    kpi('Realizado',brl0(realiz),orcado>0?`${pct(realiz/orcado*100,0)} do orçado`:'sem meta definida','var(--blue)','var(--blue-soft)')+
+    kpi(saldo>=0?'Saldo disponível':'Acima do orçado',brl0(Math.abs(saldo)),
+      saldo>=0?'ainda cabe no orçamento':'estourou o teto definido',
+      saldo>=0?'var(--green)':'var(--red)',saldo>=0?'var(--green-soft)':'var(--red-soft)')+
+    kpi('Metas estouradas',String(estouradas),estouradas?'exigem atenção':'nenhuma até agora',
+      estouradas?'var(--red)':'var(--green)',estouradas?'var(--red-soft)':'var(--green-soft)');
+
+  /* cards por área */
+  const card=(alvo,titulo,sub,wide)=>{
+    const meta=metaMes(a,m,alvo), real=realizado(a,m,alvo);
+    if(!(meta>0))return `<div class="mcard off${wide?' wide':''}">
+      <div class="mc-h"><b>${esc(titulo)}</b><span class="chip neutral">sem meta</span></div>
+      <div class="mc-v" style="color:var(--muted)">${brl0(real)}</div>
+      <div class="mc-s">realizado em ${MESES[m-1]} · nenhum teto definido</div>
+      <span class="mc-link" data-ir="orcamento">Definir meta →</span></div>`;
+    const pc=real/meta*100, s=SIT(pc);
+    return `<div class="mcard${wide?' wide':''}">
+      <div class="mc-h"><b>${esc(titulo)}</b><span class="chip ${s.cls}">${pct(pc,0)} · ${s.txt}</span></div>
+      <div class="mc-v">${brl(real)}</div>
+      <div class="mc-s">meta ${brl(meta)}${sub?' · '+esc(sub):''}</div>
+      <div class="prog"><div class="bar"><i style="width:${Math.min(pc,100).toFixed(1)}%;background:${s.cor}"></i></div>
+        <div class="lb"><span>${pc>100?'excedente':'consumido'}</span>
+          <span><b style="color:${pc>100?'var(--red)':'var(--green)'}">${brl(Math.abs(meta-real))}${pc>100?' acima':' disponível'}</b></span>
+        </div></div></div>`;
+  };
+  $('#areaCards').innerHTML=card('TOTAL','Despesa total','todos os grupos',true)+
+    ALVOS.filter(([al])=>al!=='TOTAL').map(([al,nm,cod])=>card(al,nm,cod,false)).join('');
+
+  /* tabela de contas */
+  if(!contas.length){
+    $('#areaContaChip').textContent='nenhuma';
+    $('#areaContaChip').className='chip neutral';
+    $('#areaContas').innerHTML=`<div class="empty" style="padding:40px 20px">
+      <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M9 9v11"/></svg>
+      Nenhuma meta por conta em ${MESES[m-1]} de ${a}.<br>
+      <span class="mc-link" data-ir="orcamento" style="margin-top:10px">Definir metas por conta (ex.: Água) →</span></div>`;
+    return;
+  }
+  const linhas=contas.map(r=>{
+    const meta=+r.valor_meta, real=realizado(a,m,r.alvo), info=contaInfo(r.alvo);
+    return {...info,meta,real,pc:meta>0?real/meta*100:0};
+  }).sort((x,y)=>y.pc-x.pc);
+  const nEst=linhas.filter(l=>l.pc>100).length;
+  $('#areaContaChip').textContent=nEst?`${nEst} de ${linhas.length} estourada(s)`:`${linhas.length} dentro da meta`;
+  $('#areaContaChip').className='chip '+(nEst?'bad':'ok');
+  $('#areaContas').innerHTML=`<div class="scroll-tb" style="max-height:none;padding-bottom:16px">
+    <table class="tb"><thead><tr><th>Conta</th><th>Área</th><th class="r">Meta</th><th class="r">Realizado</th>
+      <th class="r">Saldo</th><th class="r">% da meta</th><th>Situação</th></tr></thead><tbody>
+    ${linhas.map(l=>{const s=SIT(l.pc);return `<tr>
+      <td><b>${esc(l.nome)}</b><br><span style="font-size:11px;color:var(--faint)">${l.cod}</span></td>
+      <td style="font-size:12.5px;color:var(--muted)">${esc(areaNome(l.grupo))}</td>
+      <td class="r">${brl(l.meta)}</td><td class="r">${brl(l.real)}</td>
+      <td class="r" style="color:${l.meta-l.real>=0?'var(--green)':'var(--red)'}">${brl(l.meta-l.real)}</td>
+      <td class="r" style="color:${s.cor}">${pct(l.pc,0)}</td>
+      <td><span class="chip ${s.cls}">${s.txt}</span></td></tr>`;}).join('')}
+    </tbody></table></div>`;
+}
+$('#areaMes').addEventListener('change',renderArea);
+$('#v-area').addEventListener('click',e=>{
+  const l=e.target.closest('[data-ir]'); if(l)irPara(l.dataset.ir);
+});
 
 /* ===================== DETALHAMENTO ===================== */
 function renderDetalhe(){
