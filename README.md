@@ -37,13 +37,14 @@ Escolha um jeito:
 1. **Criar tabelas:** SQL Editor → New query → cole `_setup/criar_tabelas.sql` → Run.
 2. **Criar login:** Authentication → Users → Add user → `dilnor.gerente@gestao.app` + senha + ✅ Auto Confirm.
 3. **Corrigir permissões:** SQL Editor → cole `_setup/corrigir_policies.sql` → Run.
+3b. **Ampliar as metas:** SQL Editor → cole `_setup/atualizar_metas.sql` → Run. Adiciona `observacao` e `atualizado_em`; é seguro rodar de novo e não apaga nada.
 4. **Carregar histórico:** rode as 4 partes `carga_parte_1..4_de_4.sql` (uma por vez).
    - Confira: `SELECT COUNT(*) FROM despesas WHERE unidade='dilnor';` → deve dar **3617**.
 
 ## Como usar (dia a dia)
 
 - **Enviar relatório:** arraste o PDF do balancete ("124 - Por Conta"). O app lê período, faturamento e as contas, confere a soma com o total do PDF, você confirma o mês de competência e grava. Reenviar o mesmo mês **atualiza** (não duplica).
-- **Orçamento:** defina o teto do mês para o Total, para as 4 áreas e **para contas individuais** (ex.: Água, Energia, Combustível). Busque a conta pelo nome e clique em "Adicionar conta". Apagar o valor e salvar remove a meta.
+- **Orçamento (Lançamento de Metas Mensais):** escolha o mês nas setas ou nos seletores. Em cima ficam as metas gerais (faturamento, limite de despesas, economia, % máximo e uma observação do mês); embaixo, as metas por conta agrupadas por área, cada uma com valor e observação. Botões: **Copiar mês anterior**, **Limpar metas** e **Cancelar**. Nada vai para o banco antes de clicar em **Salvar metas** — apagar o valor e salvar remove a meta.
 - **Análise por Área:** acompanhamento das metas do mês — quanto foi orçado, quanto já saiu, saldo e quais estouraram, por área e por conta.
 - **Painel:** despesa do mês × faturamento, comparativo dos grupos e evolução mensal.
 
