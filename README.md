@@ -48,6 +48,16 @@ Escolha um jeito:
 - **Análise por Área:** acompanhamento das metas do mês — quanto foi orçado, quanto já saiu, saldo e quais estouraram, por área e por conta.
 - **Painel:** despesa do mês × faturamento, comparativo dos grupos e evolução mensal.
 
+## Se fechar o navegador no meio do trabalho
+
+O que você digita no Orçamento é guardado **automaticamente no navegador** (a cada meio segundo), separado por mês. Se fechar a aba, o navegador travar ou a máquina desligar, ao voltar em Orçamento aparece um aviso amarelo com a data do rascunho e os botões **Restaurar** / **Descartar**. Se o rascunho for de outro mês, o aviso traz o link para ir até ele.
+
+Ao tentar fechar a aba com metas não salvas — ou com um relatório lido e ainda não gravado — o navegador pergunta antes de sair.
+
+Dois avisos honestos:
+- O rascunho fica **naquele computador e naquele navegador**. Em outra máquina (ou numa janela anônima) ele não aparece. O que vale em qualquer lugar é o que foi **salvo** no banco.
+- Limpar os dados de navegação apaga o rascunho. **Salvar metas** é o que garante.
+
 ## Status
 
 - [x] Banco criado + histórico carregado (3.617 registros)
