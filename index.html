@@ -842,7 +842,6 @@ const somaRows=rs=>rs.reduce((s,r)=>s+r.valor,0);
 /* faturamento é da empresa toda (não por área) — nunca filtrado por área/categoria */
 function fatRows(ano,de,ate){ return DATA.fat.filter(r=>r.ano===ano&&r.mes>=de&&r.mes<=ate); }
 const somaFat=rs=>rs.reduce((s,r)=>s+(+r.fat_liquido||0),0);
-const mesesComDados=(ano,de,ate)=>new Set(despRows(ano,de,ate).map(r=>r.mes)).size;
 
 /* ===================== FILTROS (montagem) ===================== */
 function anosDisponiveis(){ return [...new Set(DATA.desp.map(r=>r.ano))].sort((a,b)=>a-b); }
@@ -889,10 +888,15 @@ function render(){
   const {ano,de,ate}=F;
   const rows=despRows(ano,de,ate), fats=fatRows(ano,de,ate);
   const total=somaRows(rows), fat=somaFat(fats);
-  const nMeses=mesesComDados(ano,de,ate)||1;
   const cAno=anoComp();
   const cRows=cAno?despRows(cAno,de,ate):[], cFats=cAno?fatRows(cAno,de,ate):[];
-  const cTotal=somaRows(cRows), cFat=somaFat(cFats), cMeses=cAno?(mesesComDados(cAno,de,ate)||1):1;
+  const cTotal=somaRows(cRows), cFat=somaFat(cFats);
+  /* despesa REAL do último mês lançado no período (não é média) */
+  const mesesNoFiltro=[...new Set(rows.map(r=>r.mes))].sort((a,b)=>a-b);
+  const mesUlt=mesesNoFiltro.length?mesesNoFiltro[mesesNoFiltro.length-1]:null;
+  const mesAnt=mesesNoFiltro.length>1?mesesNoFiltro[mesesNoFiltro.length-2]:null;
+  const despMes=mesUlt?somaRows(despRows(ano,mesUlt,mesUlt)):0;
+  const despMesAnt=mesAnt?somaRows(despRows(ano,mesAnt,mesAnt)):null;
 
   const periodo = de===ate?MESES[de-1]:`${MESES[de-1]} a ${MESES[ate-1]}`;
   $('#pgSub').textContent=`Visão executiva dos gastos | ${ano} · ${periodo.toLowerCase()}`
@@ -901,7 +905,7 @@ function render(){
   $('#updTxt').textContent='Atualizado em '+(ult?ult.split('-').reverse().join('/'):new Date().toLocaleDateString('pt-BR'));
   $('#ftInfo').textContent=`${ano} · ${periodo} · ${rows.length} lançamentos`;
 
-  renderKpis({total,fat,nMeses,cTotal,cFat,cMeses,cAno});
+  renderKpis({total,fat,cTotal,cFat,cAno,mesUlt,mesAnt,despMes,despMesAnt});
   renderCombo(ano,de,ate);
   renderDonut(ano,de,ate);
   renderCats(ano,de,ate,total);
@@ -922,18 +926,19 @@ function kpiCard({lb,vl,cor,bg,icon,foot}){
 function seta(delta,{inverso=false,suf='vs. comparação'}={}){
   if(delta==null||!isFinite(delta))return `<span style="color:var(--faint)">sem base de comparação</span>`;
   const sobe=delta>0.05, desce=delta<-0.05;
-  const bom = inverso ? desce : sobe;          /* despesas: subir é ruim */
+  /* despesa: cair é bom (verde). faturamento (inverso): subir é bom. */
+  const bom = inverso ? sobe : desce;
   const cls = (!sobe&&!desce)?'trend-flat':(bom?'trend-down':'trend-up');
   const ar = (!sobe&&!desce)?'—':(sobe?'▲':'▼');
   return `<span class="${cls}"><b>${ar} ${pct(Math.abs(delta),1)}</b></span> <span>${suf}</span>`;
 }
-function renderKpis({total,fat,nMeses,cTotal,cFat,cMeses,cAno}){
+function renderKpis({total,fat,cTotal,cFat,cAno,mesUlt,mesAnt,despMes,despMesAnt}){
   const ratio = fat>0 ? total/fat*100 : null;
   const cRatio = (cAno&&cFat>0) ? cTotal/cFat*100 : null;
   const varAnual = (cAno&&cTotal>0) ? (total-cTotal)/cTotal*100 : null;
-  const media = total/nMeses, cMedia = cAno?cTotal/cMeses:0;
   const dFat = (cAno&&cFat>0)?(fat-cFat)/cFat*100:null;
-  const dMedia=(cAno&&cMedia>0)?(media-cMedia)/cMedia*100:null;
+  /* variação da despesa do mês contra o mês anterior lançado */
+  const dMes = (despMesAnt>0)?(despMes-despMesAnt)/despMesAnt*100:null;
   const suf = cAno?`vs. ${cAno}`:'';
   const I={
     wallet:`<svg viewBox="0 0 24 24" stroke="currentColor"><path d="M3 7.5A2.5 2.5 0 0 1 5.5 5H18a2 2 0 0 1 2 2v1"/><path d="M3 7.5V17a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-2"/><path d="M21 10.5h-4a2.25 2.25 0 0 0 0 4.5h4z"/></svg>`,
@@ -950,14 +955,17 @@ function renderKpis({total,fat,nMeses,cTotal,cFat,cMeses,cAno}){
     kpiCard({lb:'Despesa / Faturamento',vl:ratio==null?'—':pct(ratio),cor:'var(--purple)',bg:'var(--purple-soft)',icon:I.pie,
       foot: ratio==null?'<span style="color:var(--faint)">requer faturamento</span>'
         : (ratioAlto?`<span class="trend-up"><b>⚠ acima de ${LIMITE_RATIO}%</b></span>`
-           : (cRatio!=null?`<span class="trend-down"><b>${(ratio-cRatio>=0?'+':'')}${(ratio-cRatio).toFixed(2).replace('.',',')} p.p.</b></span> <span>${suf}</span>`
+           : (cRatio!=null?`<span class="${ratio-cRatio>0.005?'trend-up':ratio-cRatio<-0.005?'trend-down':'trend-flat'}"><b>${(ratio-cRatio>=0?'+':'')}${(ratio-cRatio).toFixed(2).replace('.',',')} p.p.</b></span> <span>${suf}</span>`
               :'<span style="color:var(--green)">dentro do limite</span>'))}),
     kpiCard({lb:'Variação Anual',vl:varAnual==null?'—':(varAnual>0?'+':'')+pct(varAnual),
       cor:varAnual==null?'var(--muted)':(varAnual>0?'var(--red)':'var(--green)'),bg:'var(--red-soft)',icon:I.trend,
       foot: varAnual==null?'<span style="color:var(--faint)">escolha um ano de comparação</span>'
         :`<span>despesas ${varAnual>0?'acima':'abaixo'} de ${cAno}</span>`}),
-    kpiCard({lb:'Média Mensal',vl:brl(media),cor:'var(--ink)',bg:'#EEF2F8',icon:I.bars,
-      foot: seta(dMedia,{suf:cAno?`vs. ${cAno} · ${nMeses} ${nMeses>1?'meses':'mês'}`:''})})
+    kpiCard({lb:mesUlt?`Despesa de ${MESES[mesUlt-1]}`:'Despesa do mês',
+      vl:mesUlt?brl(despMes):'—',cor:'var(--ink)',bg:'#EEF2F8',icon:I.bars,
+      foot: mesUlt==null?'<span style="color:var(--faint)">nenhum mês lançado no período</span>'
+        : (mesAnt?seta(dMes,{suf:`vs. ${MESES[mesAnt-1].toLowerCase()}`})
+                :'<span style="color:var(--faint)">único mês lançado no período</span>')})
   ].join('');
 }
 
