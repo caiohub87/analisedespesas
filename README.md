@@ -7,7 +7,8 @@ Controle de despesas × faturamento + metas. App separado do saaslogistica (banc
 - **index.html** — **o sistema** (é só esse arquivo). Telas: Home, Enviar Relatório, Orçamento, Detalhamento, Auditoria.
 - **_antigo/painel-escuro.html** — versão anterior (tema escuro), fora de uso. Guardada só por segurança.
 - **vercel.json** — configuração de publicação (Vercel).
-- **carga_parte_1..4_de_4.sql** — os 3.617 registros históricos (base atualizada até 23.07.2026), em 4 partes.
+- **carga_parte_1..4_de_4.sql** — os 3.617 registros históricos de despesa (base atualizada até 23.07.2026), em 4 partes.
+- **carga_faturamento.sql** — o faturamento histórico (54 meses, 2022 a jun/2026). Sem ele o gráfico e os percentuais ficam vazios nos meses antigos.
 - **_setup/criar_tabelas.sql** — cria as 3 tabelas no Supabase.
 - **_setup/corrigir_policies.sql** — ajusta as permissões (aceita o login .gerente).
 
@@ -38,8 +39,11 @@ Escolha um jeito:
 2. **Criar login:** Authentication → Users → Add user → `dilnor.gerente@gestao.app` + senha + ✅ Auto Confirm.
 3. **Corrigir permissões:** SQL Editor → cole `_setup/corrigir_policies.sql` → Run.
 3b. **Ampliar as metas:** SQL Editor → cole `_setup/atualizar_metas.sql` → Run. Adiciona `observacao` e `atualizado_em`; é seguro rodar de novo e não apaga nada.
-4. **Carregar histórico:** rode as 4 partes `carga_parte_1..4_de_4.sql` (uma por vez).
+4. **Carregar despesas:** rode as 4 partes `carga_parte_1..4_de_4.sql` (uma por vez).
    - Confira: `SELECT COUNT(*) FROM despesas WHERE unidade='dilnor';` → deve dar **3617**.
+5. **Carregar faturamento:** rode `carga_faturamento.sql`. Sem isso, os meses antigos aparecem sem faturamento e sem percentual.
+   - Confira: `SELECT COUNT(*) FROM despesas_faturamento WHERE unidade='dilnor';` → **54** (mais os meses já enviados por PDF).
+   - Usa `ON CONFLICT DO NOTHING`: não sobrescreve mês nenhum que já tenha vindo do PDF do ERP.
 
 ## Como usar (dia a dia)
 
